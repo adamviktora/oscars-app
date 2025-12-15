@@ -17,11 +17,11 @@ export default async function Home() {
           <p className="text-base-content/70 mb-6">
             Přihlaste se a začněte tipovat Oscary 2026!
           </p>
-          <div className="flex gap-4 justify-center">
-            <Link href="/signin" className="btn btn-outline">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            <Link href="/signin" className="btn btn-outline w-full sm:w-auto">
               Přihlásit se
             </Link>
-            <Link href="/signup" className="btn btn-primary">
+            <Link href="/signup" className="btn btn-primary w-full sm:w-auto">
               Registrovat se
             </Link>
           </div>
