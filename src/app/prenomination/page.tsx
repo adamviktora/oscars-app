@@ -15,12 +15,22 @@ interface MovieSelection {
 
 export default function PrenominationPage() {
   const [movies, setMovies] = useState<MovieData[]>([]);
-  const [selections, setSelections] = useState<Map<number, MovieSelection>>(new Map());
   const [ratings, setRatings] = useState<Map<number, Rating>>(new Map());
   const [rankings, setRankings] = useState<Map<number, number | null>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hideRejected, setHideRejected] = useState(false);
+  const [hideRejected, setHideRejected] = useState(() => {
+    // Load from localStorage on initial render (only on client)
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('hideRejectedMovies') === 'true';
+    }
+    return false;
+  });
+
+  // Save hideRejected to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('hideRejectedMovies', String(hideRejected));
+  }, [hideRejected]);
 
   useEffect(() => {
     // Načíst filmy (vždy) a selections (pokud existují)
@@ -39,15 +49,12 @@ export default function PrenominationPage() {
             const selectionsData = await selectionsRes.json();
             
             // Převést selections na Map pro rychlý přístup
-            const selectionsMap = new Map();
             const ratingsMap = new Map();
             const rankingsMap = new Map();
             selectionsData.forEach((sel: MovieSelection) => {
-              selectionsMap.set(sel.movieId, sel);
               ratingsMap.set(sel.movieId, sel.rating as Rating);
               rankingsMap.set(sel.movieId, sel.ranking);
             });
-            setSelections(selectionsMap);
             setRatings(ratingsMap);
             setRankings(rankingsMap);
           }
@@ -166,14 +173,16 @@ export default function PrenominationPage() {
       {!loading && !error && (
         <div className="grid gap-4">
           {filteredMovies.map((movie) => {
-            const selection = selections.get(movie.id);
+            // Use ratings/rankings state which reflects current client-side changes
+            const currentRating = ratings.get(movie.id) || null;
+            const currentRanking = rankings.get(movie.id) || null;
             return (
               <Movie 
                 key={movie.id} 
                 id={movie.id} 
                 name={movie.name}
-                initialRating={selection?.rating as Rating || null}
-                initialRanking={selection?.ranking || null}
+                initialRating={currentRating}
+                initialRanking={currentRanking}
                 onRatingChange={handleRatingChange}
               />
             );

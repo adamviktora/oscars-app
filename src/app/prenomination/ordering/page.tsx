@@ -54,16 +54,16 @@ export default function OrderingPage() {
   const saveRankings = useCallback(async (orderedMovies: OrderedMovie[]) => {
     setIsSaving(true);
     try {
-      // Save each movie's new ranking
+      // Save each movie's ranking
       await Promise.all(
-        orderedMovies.map((movie, index) =>
+        orderedMovies.map((movie) =>
           fetch('/api/movie-selection-prenom', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               movieId: movie.id,
               rating: 'YES',
-              ranking: index + 1,
+              ranking: movie.ranking,
             }),
           })
         )
@@ -106,23 +106,26 @@ export default function OrderingPage() {
             ranking: sel.ranking ?? index + 1,
           }));
 
-        // Re-assign rankings based on final order (this fixes duplicates)
-        const orderedMovies = yesMovies.map((movie, index) => ({
-          ...movie,
-          ranking: index + 1,
-        }));
-
-        setMovies(orderedMovies);
+        // Check for duplicates
+        const rankings = yesMovies.map(m => m.ranking);
+        const hasDuplicates = rankings.length !== new Set(rankings).size;
         
-        // Check if there were any duplicates or missing rankings that need saving
-        const hadDuplicatesOrMissing = yesMovies.some((movie, index) => 
-          movie.ranking !== index + 1
-        );
-        
-        // Save the corrected order if there were duplicates
-        if (hadDuplicatesOrMissing && orderedMovies.length > 0 && !hasSavedInitial.current) {
-          hasSavedInitial.current = true;
-          await saveRankings(orderedMovies);
+        // Only re-assign sequential rankings if there are duplicates
+        if (hasDuplicates) {
+          const orderedMovies = yesMovies.map((movie, index) => ({
+            ...movie,
+            ranking: index + 1,
+          }));
+          setMovies(orderedMovies);
+          
+          // Save the corrected order
+          if (orderedMovies.length > 0 && !hasSavedInitial.current) {
+            hasSavedInitial.current = true;
+            await saveRankings(orderedMovies);
+          }
+        } else {
+          // Keep original rankings
+          setMovies(yesMovies);
         }
         
         setLoading(false);
@@ -230,7 +233,7 @@ export default function OrderingPage() {
                     <SortableMovieCard
                       id={movie.id}
                       name={movie.name}
-                      rank={index + 1}
+                      rank={movie.ranking}
                       isOverflow={isOverflow}
                     />
                   </div>

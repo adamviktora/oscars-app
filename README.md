@@ -34,3 +34,21 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Application user guide (česky)
+
+1. Otevřete stránku https://oscars-app.vercel.app
+2. Klikněte na "Registrovat se"
+3. Nyní máte dvě možnosti
+    - Buď klikněte na "Pokračovat přes Google" a následně vyberte váš google účet
+    - Nebo vyplňte formulář - jméno, email, heslo, zopakujte heslo a klikněte na "Registrovat se"
+4. Po registraci jste automaticky přihlášení
+
+### Jak vyplnit prenominační list na webu?
+
+1. Na hlavní stránce klikněte na "Prenominační kolo", případně v levém horním rohu obrazovky klikněte na menu a zvolte "Prenominační kolo"
+2. Uvidíte seznam filmů. Každý film můžete označit jako ✅ (Ano) / ? (Možná) / ❌ (Ne).
+3. U filmů označených jako ✅ (Ano) následně můžete zvolit pořadí od 1 do 10.
+4. Vpravo nad listem můžete skrýt zamítnuté filmy (označené křížkem ❌)
+5. Tlačítko "Seřadit TOP filmy" vás přesune na stránku, kde můžete snadno řadit filmy z vašeho výběru pomocí přetahování
+6. Váš výběr se ihned automaticky ukládá - ujistěte se ovšem, že jste při vyplňování připojeni k internetu

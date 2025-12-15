@@ -29,6 +29,12 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
   const [ranking, setRanking] = useState<number | null>(initialRanking || null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Sync internal state with props when they change (e.g., after filter toggle)
+  useEffect(() => {
+    setSelectedRating(initialRating || null);
+    setRanking(initialRanking || null);
+  }, [initialRating, initialRanking]);
+
   const handleRatingChange = (rating: Rating) => {
     setSelectedRating(rating);
     const newRanking = rating === Rating.YES ? ranking : null;
