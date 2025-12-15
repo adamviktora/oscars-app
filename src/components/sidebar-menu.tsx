@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { ORDERING_PAGE_LABEL } from '@/lib/constants';
 
 export function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,16 +12,27 @@ export function SidebarMenu() {
       label: 'Prenominační kolo',
       href: '/prenomination',
       enabled: true,
+      icon: '🎬',
+      subItems: [
+        {
+          label: ORDERING_PAGE_LABEL,
+          href: '/prenomination/ordering',
+          enabled: true,
+          icon: '📊',
+        },
+      ],
     },
     {
       label: 'Prenominační kolo 2.0',
       href: '/prenomination-2',
       enabled: false,
+      icon: '🎬',
     },
     {
       label: 'Nominační kolo',
       href: '/nomination',
       enabled: false,
+      icon: '🏆',
     },
   ];
 
@@ -63,8 +75,8 @@ export function SidebarMenu() {
         }`}
       >
         {/* Sidebar Header */}
-        <div className="bg-gradient-to-r from-amber-400 to-yellow-500 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900">Menu</h2>
+        <div className="bg-linear-to-r from-amber-400 to-yellow-500 p-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">Nabídka</h2>
           <button
             onClick={() => setIsOpen(false)}
             className="btn btn-ghost btn-square btn-sm text-gray-900"
@@ -92,17 +104,43 @@ export function SidebarMenu() {
           {menuItems.map((item) => (
             <li key={item.href}>
               {item.enabled ? (
-                <Link
-                  href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-                >
-                  <span className="text-amber-500">🎬</span>
-                  {item.label}
-                </Link>
+                <>
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
+                  >
+                    <span className="text-amber-500">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                  {item.subItems && (
+                    <ul className="ml-4 mt-1 space-y-1">
+                      {item.subItems.map((subItem) => (
+                        <li key={subItem.href}>
+                          {subItem.enabled ? (
+                            <Link
+                              href={subItem.href}
+                              onClick={() => setIsOpen(false)}
+                              className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                            >
+                              <span>{subItem.icon}</span>
+                              {subItem.label}
+                            </Link>
+                          ) : (
+                            <span className="flex items-center gap-3 py-2 px-4 rounded-lg text-base-content/40 cursor-not-allowed text-sm">
+                              <span className="opacity-40">{subItem.icon}</span>
+                              {subItem.label}
+                              <span className="badge badge-xs badge-ghost ml-auto">Již brzy</span>
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               ) : (
                 <span className="flex items-center gap-3 py-3 px-4 rounded-lg text-base-content/40 cursor-not-allowed">
-                  <span className="opacity-40">🎬</span>
+                  <span className="opacity-40">{item.icon}</span>
                   {item.label}
                   <span className="badge badge-sm badge-ghost ml-auto">Již brzy</span>
                 </span>

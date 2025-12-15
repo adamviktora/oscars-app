@@ -18,7 +18,7 @@ export async function Navbar() {
             <SidebarMenu />
             <Link href="/">
               <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                🏆 Oscars Predictions 2026
+                🏆 Oscars predictions 2026
               </h1>
             </Link>
           </div>
@@ -32,11 +32,11 @@ export async function Navbar() {
               />
             ) : (
               <>
-                <Link href="/signin" className="btn btn-ghost btn-sm text-gray-900">
-                  Sign in
+                <Link href="/signin" className="btn btn-ghost btn-sm text-gray-900 hover:bg-amber-300 hover:text-gray-900">
+                  Přihlásit se
                 </Link>
                 <Link href="/signup" className="btn btn-sm bg-gray-900 text-amber-400 hover:bg-gray-800">
-                  Sign up
+                  Registrovat se
                 </Link>
               </>
             )}

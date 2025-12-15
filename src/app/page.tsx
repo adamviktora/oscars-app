@@ -11,16 +11,18 @@ export default async function Home() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Welcome to Oscars Predictions</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            Vítejte v Oscars Predictions
+          </h2>
           <p className="text-base-content/70 mb-6">
-            Sign in to start making your predictions for the 2026 Oscars!
+            Přihlaste se a začněte tipovat Oscary 2026!
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/signin" className="btn btn-outline">
-              Sign in
+              Přihlásit se
             </Link>
             <Link href="/signup" className="btn btn-primary">
-              Sign up
+              Registrovat se
             </Link>
           </div>
         </div>
@@ -31,15 +33,16 @@ export default async function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-4">Welcome back, {session.user.name}!</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          Vítej, {session.user.name}!
+        </h2>
         <p className="text-base-content/70 mb-6">
-          Ready to make your Oscar predictions?
+          Začni s tipováním letošních oscarových sázek!
         </p>
         <Link href="/prenomination" className="btn btn-primary">
-          Start Predictions
+          Prenominační kolo
         </Link>
       </div>
     </div>
   );
 }
-

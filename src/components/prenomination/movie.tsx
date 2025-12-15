@@ -21,12 +21,26 @@ interface MovieProps {
   name: string;
   initialRating?: Rating | null;
   initialRanking?: number | null;
+  onRatingChange?: (movieId: number, rating: Rating, ranking: number | null) => void;
 }
 
-export default function Movie({ id, name, initialRating, initialRanking }: MovieProps) {
+export default function Movie({ id, name, initialRating, initialRanking, onRatingChange }: MovieProps) {
   const [selectedRating, setSelectedRating] = useState<Rating | null>(initialRating || null);
   const [ranking, setRanking] = useState<number | null>(initialRanking || null);
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleRatingChange = (rating: Rating) => {
+    setSelectedRating(rating);
+    const newRanking = rating === Rating.YES ? ranking : null;
+    onRatingChange?.(id, rating, newRanking);
+  };
+
+  const handleRankingChange = (newRank: number) => {
+    setRanking(newRank);
+    if (selectedRating === Rating.YES) {
+      onRatingChange?.(id, Rating.YES, newRank);
+    }
+  };
 
   // Ukládání změn do databáze
   useEffect(() => {
@@ -71,7 +85,7 @@ export default function Movie({ id, name, initialRating, initialRanking }: Movie
             name={`movie-${id}`}
             className="radio radio-success"
             checked={selectedRating === Rating.YES}
-            onChange={() => setSelectedRating(Rating.YES)}
+            onChange={() => handleRatingChange(Rating.YES)}
           />
           <Check className="w-6 h-6 text-green-500" strokeWidth={3} />
         </label>
@@ -81,7 +95,7 @@ export default function Movie({ id, name, initialRating, initialRanking }: Movie
             name={`movie-${id}`}
             className="radio radio-warning"
             checked={selectedRating === Rating.MAYBE}
-            onChange={() => setSelectedRating(Rating.MAYBE)}
+            onChange={() => handleRatingChange(Rating.MAYBE)}
           />
           <HelpCircle className="w-6 h-6 text-yellow-500" strokeWidth={2.5} />
         </label>
@@ -91,7 +105,7 @@ export default function Movie({ id, name, initialRating, initialRanking }: Movie
             name={`movie-${id}`}
             className="radio radio-error"
             checked={selectedRating === Rating.NO}
-            onChange={() => setSelectedRating(Rating.NO)}
+            onChange={() => handleRatingChange(Rating.NO)}
           />
           <X className="w-6 h-6 text-red-500" strokeWidth={3} />
         </label>
@@ -106,7 +120,7 @@ export default function Movie({ id, name, initialRating, initialRanking }: Movie
               <button
                 key={num}
                 type="button"
-                onClick={() => setRanking(num)}
+                onClick={() => handleRankingChange(num)}
                 className={`w-10 h-10 rounded-lg font-semibold transition-all ${
                   ranking === num
                     ? 'bg-green-500 text-white scale-110'
