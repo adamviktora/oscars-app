@@ -74,9 +74,23 @@ export default function PrenominationPage() {
     loadData();
   }, []);
 
-  const handleRatingChange = (movieId: number, rating: Rating, ranking: number | null) => {
-    setRatings(prev => new Map(prev).set(movieId, rating));
-    setRankings(prev => new Map(prev).set(movieId, ranking));
+  const handleRatingChange = (movieId: number, rating: Rating | null, ranking: number | null) => {
+    if (rating === null) {
+      // Remove from maps when unselected
+      setRatings(prev => {
+        const next = new Map(prev);
+        next.delete(movieId);
+        return next;
+      });
+      setRankings(prev => {
+        const next = new Map(prev);
+        next.delete(movieId);
+        return next;
+      });
+    } else {
+      setRatings(prev => new Map(prev).set(movieId, rating));
+      setRankings(prev => new Map(prev).set(movieId, ranking));
+    }
   };
 
   // Sort movies by prenom1Order (API only returns movies with prenom1Order)
@@ -123,17 +137,6 @@ export default function PrenominationPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Final submission button */}
-      <div className="mb-6">
-        <button
-          onClick={() => modalRef.current?.showModal()}
-          className="btn btn-primary w-full gap-2"
-        >
-          <Send className="w-5 h-5" />
-          Finální odevzdání
-        </button>
-      </div>
-
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">Prenominační kolo</h1>
         
@@ -204,6 +207,19 @@ export default function PrenominationPage() {
               Všechny filmy jsou zamítnuté. Vypněte filtr pro jejich zobrazení.
             </p>
           )}
+        </div>
+      )}
+
+      {/* Final submission button */}
+      {!loading && !error && (
+        <div className="mt-8 flex justify-end">
+          <button
+            onClick={() => modalRef.current?.showModal()}
+            className="btn btn-primary gap-2"
+          >
+            <Send className="w-5 h-5" />
+            Finální odevzdání
+          </button>
         </div>
       )}
 

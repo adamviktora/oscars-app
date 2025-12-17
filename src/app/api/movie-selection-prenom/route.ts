@@ -90,3 +90,44 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// DELETE - Odstranit výběr filmu
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const movieId = searchParams.get('movieId');
+
+    if (!movieId) {
+      return NextResponse.json(
+        { error: 'Missing movieId' },
+        { status: 400 }
+      );
+    }
+
+    await prisma.userMovieSelectionPrenom.deleteMany({
+      where: {
+        userId: session.user.id,
+        movieId: parseInt(movieId),
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting movie selection:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete selection' },
+      { status: 500 }
+    );
+  }
+}
+

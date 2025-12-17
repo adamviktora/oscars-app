@@ -22,7 +22,7 @@ interface MovieProps {
   name: string;
   initialRating?: Rating | null;
   initialRanking?: number | null;
-  onRatingChange?: (movieId: number, rating: Rating, ranking: number | null) => void;
+  onRatingChange?: (movieId: number, rating: Rating | null, ranking: number | null) => void;
 }
 
 export default function Movie({ id, name, initialRating, initialRanking, onRatingChange }: MovieProps) {
@@ -36,10 +36,17 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
     setRanking(initialRanking || null);
   }, [initialRating, initialRanking]);
 
-  const handleRatingChange = (rating: Rating) => {
-    setSelectedRating(rating);
-    const newRanking = rating === Rating.YES ? ranking : null;
-    onRatingChange?.(id, rating, newRanking);
+  const handleRatingClick = (rating: Rating) => {
+    // If clicking on the same rating, unselect it
+    if (selectedRating === rating) {
+      setSelectedRating(null);
+      setRanking(null);
+      onRatingChange?.(id, null, null);
+    } else {
+      setSelectedRating(rating);
+      const newRanking = rating === Rating.YES ? ranking : null;
+      onRatingChange?.(id, rating, newRanking);
+    }
   };
 
   const handleRankingChange = (newRank: number) => {
@@ -49,24 +56,39 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
     }
   };
 
+  // Track if initial load is done to prevent saving on mount
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    setIsInitialized(true);
+  }, []);
+
   // Ukládání změn do databáze
   useEffect(() => {
-    if (selectedRating === null) return;
+    if (!isInitialized) return;
 
     const saveSelection = async () => {
       setIsSaving(true);
       try {
-        await fetch('/api/movie-selection-prenom', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            movieId: id,
-            rating: selectedRating,
-            ranking: selectedRating === Rating.YES ? ranking : null,
-          }),
-        });
+        if (selectedRating === null) {
+          // Delete selection
+          await fetch(`/api/movie-selection-prenom?movieId=${id}`, {
+            method: 'DELETE',
+          });
+        } else {
+          // Save selection
+          await fetch('/api/movie-selection-prenom', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              movieId: id,
+              rating: selectedRating,
+              ranking: selectedRating === Rating.YES ? ranking : null,
+            }),
+          });
+        }
       } catch (error) {
         console.error('Error saving selection:', error);
       } finally {
@@ -75,7 +97,7 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
     };
 
     saveSelection();
-  }, [selectedRating, ranking, id]);
+  }, [selectedRating, ranking, id, isInitialized]);
 
   return (
     <div className="border p-4 rounded-lg relative">
@@ -86,36 +108,45 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
       )}
       <h2 className="text-xl font-semibold mb-3">{name}</h2>
       <div className="flex gap-4 items-center">
-        <label className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+        <div 
+          onClick={() => handleRatingClick(Rating.YES)}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <input
             type="radio"
             name={`movie-${id}`}
             className="radio radio-success"
             checked={selectedRating === Rating.YES}
-            onChange={() => handleRatingChange(Rating.YES)}
+            readOnly
           />
           <Check className="w-6 h-6 text-green-500" strokeWidth={3} />
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+        </div>
+        <div 
+          onClick={() => handleRatingClick(Rating.MAYBE)}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <input
             type="radio"
             name={`movie-${id}`}
             className="radio radio-warning"
             checked={selectedRating === Rating.MAYBE}
-            onChange={() => handleRatingChange(Rating.MAYBE)}
+            readOnly
           />
           <HelpCircle className="w-6 h-6 text-yellow-500" strokeWidth={2.5} />
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+        </div>
+        <div 
+          onClick={() => handleRatingClick(Rating.NO)}
+          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <input
             type="radio"
             name={`movie-${id}`}
             className="radio radio-error"
             checked={selectedRating === Rating.NO}
-            onChange={() => handleRatingChange(Rating.NO)}
+            readOnly
           />
           <X className="w-6 h-6 text-red-500" strokeWidth={3} />
-        </label>
+        </div>
       </div>
       {selectedRating === Rating.YES && (
         <div className="mt-4">

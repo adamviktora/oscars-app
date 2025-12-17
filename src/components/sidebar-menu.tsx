@@ -24,8 +24,8 @@ export function SidebarMenu() {
     },
     {
       label: 'Prenominační kolo 2.0',
-      href: '/prenomination-2',
-      enabled: false,
+      href: '/prenomination2',
+      enabled: true,
       icon: '🎬',
     },
     {
