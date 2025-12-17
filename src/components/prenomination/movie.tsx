@@ -6,6 +6,7 @@ import { Check, HelpCircle, X } from 'lucide-react';
 export interface MovieData {
   id: number;
   name: string;
+  prenom1Order: number | null;
   createdAt: string;
   updatedAt: string;
 }

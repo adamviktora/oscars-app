@@ -17,13 +17,15 @@ async function main() {
       where: { id: movie.id },
       update: {
         name: movie.name,
+        prenom1Order: movie.id, // All movies from JSON are in Prenom 1.0
       },
       create: {
         id: movie.id,
         name: movie.name,
+        prenom1Order: movie.id, // All movies from JSON are in Prenom 1.0
       },
     });
-    console.log(`Added/Updated movie: ${movie.name}`);
+    console.log(`Added/Updated movie: ${movie.name} (prenom1Order: ${movie.id})`);
   }
 
   console.log('Seeding completed!');

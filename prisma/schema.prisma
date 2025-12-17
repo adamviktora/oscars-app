@@ -21,6 +21,7 @@ model User {
   sessions                 Session[]
   accounts                 Account[]
   movieSelectionsPrenom    UserMovieSelectionPrenom[]
+  prenom2Selections        UserPrenom2Selection[]
 
   @@unique([email])
   @@map("user")
@@ -74,9 +75,12 @@ model Verification {
 model Movie {
   id                    Int                        @id @default(autoincrement())
   name                  String
+  prenom1Order          Int?                       // Order in Prenomination 1.0 (null = not in prenom1)
   createdAt             DateTime                   @default(now())
   updatedAt             DateTime                   @updatedAt
   userSelectionsPrenom  UserMovieSelectionPrenom[]
+  prenom2Categories     Prenom2CategoryMovie[]
+  prenom2Selections     UserPrenom2Selection[]
 
   @@map("movie")
 }
@@ -95,4 +99,53 @@ model UserMovieSelectionPrenom {
 
   @@unique([userId, movieId])
   @@map("user_movie_selection_prenom")
+}
+
+// ============================================
+// PRENOMINATION 2.0 - Categories & Selections
+// ============================================
+
+model Prenom2Category {
+  id         Int                      @id @default(autoincrement())
+  name       String                   @unique  // e.g. "Hudba", "Píseň", etc.
+  slug       String                   @unique  // e.g. "music", "song", etc.
+  order      Int                      @default(0)
+  createdAt  DateTime                 @default(now())
+  updatedAt  DateTime                 @updatedAt
+  
+  movies     Prenom2CategoryMovie[]
+  selections UserPrenom2Selection[]
+  
+  @@map("prenom2_category")
+}
+
+// Junction table: which movies are nominated in which categories
+model Prenom2CategoryMovie {
+  id         Int              @id @default(autoincrement())
+  categoryId Int
+  movieId    Int
+  createdAt  DateTime         @default(now())
+  
+  category   Prenom2Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  movie      Movie            @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  
+  @@unique([categoryId, movieId])
+  @@map("prenom2_category_movie")
+}
+
+// User's selection in Prenom 2.0 (max 5 per category)
+model UserPrenom2Selection {
+  id         Int              @id @default(autoincrement())
+  userId     String
+  categoryId Int
+  movieId    Int
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Prenom2Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  movie      Movie            @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, categoryId, movieId])
+  @@map("user_prenom2_selection")
 }

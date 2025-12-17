@@ -1,63 +1,96 @@
 [
-  {
-    "id": 1,
-    "name": "The Shawshank Redemption"
-  },
-  {
-    "id": 2,
-    "name": "The Godfather"
-  },
-  {
-    "id": 3,
-    "name": "The Dark Knight"
-  },
-  {
-    "id": 4,
-    "name": "Pulp Fiction"
-  },
-  {
-    "id": 5,
-    "name": "Forrest Gump"
-  },
-  {
-    "id": 6,
-    "name": "Inception"
-  },
-  {
-    "id": 7,
-    "name": "The Matrix"
-  },
-  {
-    "id": 8,
-    "name": "Goodfellas"
-  },
-  {
-    "id": 9,
-    "name": "The Silence of the Lambs"
-  },
-  {
-    "id": 10,
-    "name": "Interstellar"
-  },
-  {
-    "id": 11,
-    "name": "Schindler's List"
-  },
-  {
-    "id": 12,
-    "name": "Fight Club"
-  },
-  {
-    "id": 13,
-    "name": "The Lord of the Rings: The Return of the King"
-  },
-  {
-    "id": 14,
-    "name": "Gladiator"
-  },
-  {
-    "id": 15,
-    "name": "The Departed"
-  }
+  { "id": 1, "name": "Arco" },
+  { "id": 2, "name": "Autobus naděje" },
+  { "id": 3, "name": "Avatar: Oheň a popel" },
+  { "id": 4, "name": "Až na dno" },
+  { "id": 5, "name": "Balada o malém hráči" },
+  { "id": 6, "name": "Balada o ostrově Wallis" },
+  { "id": 7, "name": "Balerína" },
+  { "id": 8, "name": "Belén" },
+  { "id": 9, "name": "Bez dvojčete" },
+  { "id": 10, "name": "Bláznivá střela" },
+  { "id": 11, "name": "Blbci z Baltimoru" },
+  { "id": 12, "name": "Bob Trevino to má rád" },
+  { "id": 13, "name": "Bugonia" },
+  { "id": 14, "name": "Citová hodnota" },
+  { "id": 15, "name": "Čarodějka: Druhá část" },
+  { "id": 16, "name": "Číhající" },
+  { "id": 17, "name": "Demon Slayer: Kimetsu no Yaiba Infinity Castle" },
+  { "id": 18, "name": "Den Petera Hujara" },
+  { "id": 19, "name": "Die My Love" },
+  { "id": 20, "name": "Dlouhý pochod" },
+  { "id": 21, "name": "Dokonalá shoda" },
+  { "id": 22, "name": "Dort pro prezidenta" },
+  { "id": 23, "name": "Drobná nehoda" },
+  { "id": 24, "name": "Dům plný dynamitu" },
+  { "id": 25, "name": "28 let poté" },
+  { "id": 26, "name": "Eddington" },
+  { "id": 27, "name": "Eleanor" },
+  { "id": 28, "name": "Elio" },
+  { "id": 29, "name": "Fantastická 4: První kroky" },
+  { "id": 30, "name": "Fénické spiknutí" },
+  { "id": 31, "name": "F1" },
+  { "id": 32, "name": "Frankenstein" },
+  { "id": 33, "name": "Funguje to?" },
+  { "id": 34, "name": "Hamnet" },
+  { "id": 35, "name": "Hedda" },
+  { "id": 36, "name": "Hlas Hind Radžab" },
+  { "id": 37, "name": "Hodina zmizení" },
+  { "id": 38, "name": "Hodný pejsek" },
+  { "id": 39, "name": "Hříšníci" },
+  { "id": 40, "name": "Chronologie vody" },
+  { "id": 41, "name": "Chuckův život" },
+  { "id": 42, "name": "Chytrák" },
+  { "id": 43, "name": "Jak vycvičit draka" },
+  { "id": 44, "name": "Jay Kelly" },
+  { "id": 45, "name": "Jedna bitva za druhou" },
+  { "id": 46, "name": "Kdybych měla nohy, tak ti nakopu" },
+  { "id": 47, "name": "K-pop: Lovkyně démonů" },
+  { "id": 48, "name": "Levoruká" },
+  { "id": 49, "name": "Malá Amélie" },
+  { "id": 50, "name": "Mickey 17" },
+  { "id": 51, "name": "Mission: Impossible – Poslední zúčtování" },
+  { "id": 52, "name": "Mlátička" },
+  { "id": 53, "name": "Modrý úplněk" },
+  { "id": 54, "name": "Mor" },
+  { "id": 55, "name": "Na cestě domů" },
+  { "id": 56, "name": "Na nože: Probuzení mrtvého muže" },
+  { "id": 57, "name": "Navždy s tebou?" },
+  { "id": 58, "name": "Národní poklad" },
+  { "id": 59, "name": "Není jiná možnost" },
+  { "id": 60, "name": "Norimberk" },
+  { "id": 61, "name": "Nová vlna" },
+  { "id": 62, "name": "Obvinění" },
+  { "id": 63, "name": "Operace Black Bag" },
+  { "id": 64, "name": "Otec Matka Sestra Bratr" },
+  { "id": 65, "name": "Palác Modrého slunce" },
+  { "id": 66, "name": "Palestina 36" },
+  { "id": 67, "name": "Pobuda" },
+  { "id": 68, "name": "Pohled do slunce" },
+  { "id": 69, "name": "Polibek pavoučí ženy" },
+  { "id": 70, "name": "Poslední nadhoz" },
+  { "id": 71, "name": "Povědomý dotek" },
+  { "id": 72, "name": "Pozdní směna" },
+  { "id": 73, "name": "Přátelství" },
+  { "id": 74, "name": "Rodina k pronájmu" },
+  { "id": 75, "name": "Sasanka" },
+  { "id": 76, "name": "Sirat" },
+  { "id": 77, "name": "Smutný song" },
+  { "id": 78, "name": "Sny o vlacích" },
+  { "id": 79, "name": "Sorry, Baby" },
+  { "id": 80, "name": "Splitsville" },
+  { "id": 81, "name": "Společník" },
+  { "id": 82, "name": "Springsteen: Vysvoboď mě z neznáma" },
+  { "id": 83, "name": "Superman" },
+  { "id": 84, "name": "Svědectví o Ann Lee" },
+  { "id": 85, "name": "Tajný agent" },
+  { "id": 86, "name": "Tandem" },
+  { "id": 87, "name": "To nevymyslíš" },
+  { "id": 88, "name": "Tron: Ares" },
+  { "id": 89, "name": "Válka" },
+  { "id": 90, "name": "Velký Marty" },
+  { "id": 91, "name": "Vrať mi ji" },
+  { "id": 92, "name": "Vše, co z tebe zbylo" },
+  { "id": 93, "name": "Zootropolis: Město zvířat 2" },
+  { "id": 94, "name": "Život v hajzlu" }
 ]
-

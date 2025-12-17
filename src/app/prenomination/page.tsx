@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
-import { ListOrdered, AlertTriangle } from 'lucide-react';
+import { ListOrdered, AlertTriangle, Send, Calendar } from 'lucide-react';
 import Movie, { MovieData, Rating } from '@/components/prenomination/movie';
 import { ORDERING_PAGE_LABEL } from '@/lib/constants';
 
@@ -26,6 +26,7 @@ export default function PrenominationPage() {
     }
     return false;
   });
+  const modalRef = useRef<HTMLDialogElement>(null);
 
   // Save hideRejected to localStorage when it changes
   useEffect(() => {
@@ -78,9 +79,9 @@ export default function PrenominationPage() {
     setRankings(prev => new Map(prev).set(movieId, ranking));
   };
 
-  // Sort movies alphabetically
+  // Sort movies by prenom1Order (API only returns movies with prenom1Order)
   const sortedMovies = useMemo(() => {
-    return [...movies].sort((a, b) => a.name.localeCompare(b.name, 'cs'));
+    return [...movies].sort((a, b) => (a.prenom1Order ?? 0) - (b.prenom1Order ?? 0));
   }, [movies]);
 
   const filteredMovies = useMemo(() => {
@@ -122,6 +123,17 @@ export default function PrenominationPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* Final submission button */}
+      <div className="mb-6">
+        <button
+          onClick={() => modalRef.current?.showModal()}
+          className="btn btn-primary w-full gap-2"
+        >
+          <Send className="w-5 h-5" />
+          Finální odevzdání
+        </button>
+      </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">Prenominační kolo</h1>
         
@@ -194,6 +206,30 @@ export default function PrenominationPage() {
           )}
         </div>
       )}
+
+      {/* Modal for final submission info */}
+      <dialog ref={modalRef} className="modal">
+        <div className="modal-box">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Finální odevzdání
+          </h3>
+          <p className="py-4">
+            Finální odevzdání prenominačního kola bude možné nejdříve <strong>3. ledna 2025</strong>.
+          </p>
+          <p className="text-sm text-base-content/70">
+            Do té doby můžete své výběry kdykoliv upravovat.
+          </p>
+          <div className="modal-action">
+            <form method="dialog">
+              <button className="btn">Rozumím</button>
+            </form>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button>zavřít</button>
+        </form>
+      </dialog>
     </div>
   );
 }

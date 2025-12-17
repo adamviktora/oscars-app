@@ -3,9 +3,13 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
+    // Only return movies that are in Prenomination 1.0 (have prenom1Order)
     const movies = await prisma.movie.findMany({
+      where: {
+        prenom1Order: { not: null }
+      },
       orderBy: {
-        id: 'asc'
+        prenom1Order: 'asc'
       }
     });
     
