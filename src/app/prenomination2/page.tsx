@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { Send, Calendar, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { Send, Calendar, ChevronDown, ChevronUp, Check, Save, Loader2 } from 'lucide-react';
 import MovieCheckbox from '@/components/prenom2/movie-checkbox';
 
 interface Movie {
@@ -24,27 +24,65 @@ interface Selection {
 
 export default function Prenomination2Page() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selections, setSelections] = useState<Map<string, boolean>>(new Map());
+  
+  // Server state (what's saved in DB)
+  const [savedSelections, setSavedSelections] = useState<Set<string>>(new Set());
+  
+  // Local state (current UI state)
+  const [localSelections, setLocalSelections] = useState<Set<string>>(new Set());
+  
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
-  const [savingStates, setSavingStates] = useState<Map<string, boolean>>(new Map());
   const modalRef = useRef<HTMLDialogElement>(null);
 
   // Helper to create selection key
   const getSelectionKey = (categoryId: number, movieId: number) => 
     `${categoryId}-${movieId}`;
 
+  // Parse selection key
+  const parseSelectionKey = (key: string): { categoryId: number; movieId: number } => {
+    const [categoryId, movieId] = key.split('-').map(Number);
+    return { categoryId, movieId };
+  };
+
   // Count selections per category
-  const getSelectionCount = (categoryId: number) => {
+  const getSelectionCount = useCallback((categoryId: number) => {
     let count = 0;
-    selections.forEach((selected, key) => {
-      if (selected && key.startsWith(`${categoryId}-`)) {
+    localSelections.forEach((key) => {
+      if (key.startsWith(`${categoryId}-`)) {
         count++;
       }
     });
     return count;
-  };
+  }, [localSelections]);
+
+  // Calculate unsaved changes
+  const { toAdd, toRemove, hasUnsavedChanges } = useMemo(() => {
+    const add: { categoryId: number; movieId: number }[] = [];
+    const remove: { categoryId: number; movieId: number }[] = [];
+    
+    // New selections (in local but not saved)
+    localSelections.forEach(key => {
+      if (!savedSelections.has(key)) {
+        add.push(parseSelectionKey(key));
+      }
+    });
+    
+    // Removed selections (in saved but not local)
+    savedSelections.forEach(key => {
+      if (!localSelections.has(key)) {
+        remove.push(parseSelectionKey(key));
+      }
+    });
+    
+    return { 
+      toAdd: add, 
+      toRemove: remove, 
+      hasUnsavedChanges: add.length > 0 || remove.length > 0 
+    };
+  }, [localSelections, savedSelections]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -65,11 +103,12 @@ export default function Prenomination2Page() {
           const selectionsRes = await fetch('/api/prenom2/selections');
           if (selectionsRes.ok) {
             const selectionsData: Selection[] = await selectionsRes.json();
-            const selectionsMap = new Map<string, boolean>();
+            const selectionsSet = new Set<string>();
             selectionsData.forEach((sel) => {
-              selectionsMap.set(getSelectionKey(sel.categoryId, sel.movieId), true);
+              selectionsSet.add(getSelectionKey(sel.categoryId, sel.movieId));
             });
-            setSelections(selectionsMap);
+            setSavedSelections(selectionsSet);
+            setLocalSelections(new Set(selectionsSet)); // Clone for local state
           }
         } catch {
           console.log('Nenalezeny žádné existující výběry');
@@ -97,45 +136,77 @@ export default function Prenomination2Page() {
     });
   };
 
-  const handleToggleSelection = async (categoryId: number, movieId: number, selected: boolean) => {
+  const handleToggleSelection = useCallback((categoryId: number, movieId: number, selected: boolean) => {
     const key = getSelectionKey(categoryId, movieId);
     
-    // Optimistic update
-    setSelections((prev) => new Map(prev).set(key, selected));
-    setSavingStates((prev) => new Map(prev).set(key, true));
+    setLocalSelections((prev) => {
+      const next = new Set(prev);
+      if (selected) {
+        // Check if already at max
+        let count = 0;
+        next.forEach(k => {
+          if (k.startsWith(`${categoryId}-`)) count++;
+        });
+        if (count >= 5) {
+          return prev; // Don't add if at max
+        }
+        next.add(key);
+      } else {
+        next.delete(key);
+      }
+      return next;
+    });
+  }, []);
 
+  // Save all changes to server
+  const handleSave = async () => {
+    if (!hasUnsavedChanges) return;
+    
+    setSaving(true);
+    setError(null);
+    
     try {
-      const res = await fetch('/api/prenom2/selections', {
+      const response = await fetch('/api/prenom2/selections/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ categoryId, movieId, selected }),
+        body: JSON.stringify({ toAdd, toRemove }),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        // Revert on error
-        setSelections((prev) => new Map(prev).set(key, !selected));
-        if (data.error === 'Maximum 5 selections per category') {
-          alert('Můžete vybrat maximálně 5 filmů v každé kategorii.');
-        }
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Nepodařilo se uložit změny');
       }
-    } catch {
-      // Revert on error
-      setSelections((prev) => new Map(prev).set(key, !selected));
+      
+      // Update saved state to match local state
+      setSavedSelections(new Set(localSelections));
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nepodařilo se uložit změny');
     } finally {
-      setSavingStates((prev) => {
-        const next = new Map(prev);
-        next.delete(key);
-        return next;
-      });
+      setSaving(false);
     }
   };
+
+  // Warn user about unsaved changes when leaving
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Calculate total progress
   const totalCategories = categories.length;
   const completedCategories = categories.filter(
     (cat) => getSelectionCount(cat.id) === 5
   ).length;
+
+  const unsavedCount = toAdd.length + toRemove.length;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -153,7 +224,46 @@ export default function Prenomination2Page() {
       </p>
 
       {loading && <p>Načítání kategorií...</p>}
-      {error && <p className="text-red-500">Chyba: {error}</p>}
+
+      {error && (
+        <div className="alert alert-error mb-6">
+          <span>Chyba: {error}</span>
+          <button 
+            className="btn btn-sm"
+            onClick={() => {
+              setError(null);
+              window.location.reload();
+            }}
+          >
+            Zkusit znovu
+          </button>
+        </div>
+      )}
+
+      {/* Unsaved changes indicator */}
+      {!loading && !error && hasUnsavedChanges && (
+        <div className="alert border-2 border-warning bg-transparent mb-6">
+          <Save className="w-5 h-5 text-warning" />
+          <span>Máte {unsavedCount} neuložených změn</span>
+          <button 
+            className="btn btn-success btn-sm gap-2"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Ukládám...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Uložit změny
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {!loading && !error && (
         <div className="space-y-4">
@@ -198,8 +308,8 @@ export default function Prenomination2Page() {
                   <div className="p-4 grid gap-2 sm:grid-cols-2">
                     {category.movies.map((movie) => {
                       const key = getSelectionKey(category.id, movie.id);
-                      const isSelected = selections.get(key) || false;
-                      const isSaving = savingStates.get(key) || false;
+                      const isSelected = localSelections.has(key);
+                      const isUnsaved = isSelected !== savedSelections.has(key);
                       const isDisabled = selectionCount >= 5 && !isSelected;
 
                       return (
@@ -209,15 +319,11 @@ export default function Prenomination2Page() {
                             name={movie.name}
                             selected={isSelected}
                             disabled={isDisabled}
+                            hasUnsavedChanges={isUnsaved}
                             onToggle={(movieId, selected) =>
                               handleToggleSelection(category.id, movieId, selected)
                             }
                           />
-                          {isSaving && (
-                            <div className="absolute top-2 right-2">
-                              <span className="loading loading-spinner loading-xs"></span>
-                            </div>
-                          )}
                         </div>
                       );
                     })}
@@ -231,7 +337,26 @@ export default function Prenomination2Page() {
 
       {/* Final submission button */}
       {!loading && !error && (
-        <div className="mt-8 flex justify-end">
+        <div className="mt-8 flex justify-end gap-4">
+          {hasUnsavedChanges && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="btn btn-success gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Ukládám...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Uložit změny ({unsavedCount})
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={() => modalRef.current?.showModal()}
             className="btn btn-primary gap-2"
@@ -268,4 +393,3 @@ export default function Prenomination2Page() {
     </div>
   );
 }
-

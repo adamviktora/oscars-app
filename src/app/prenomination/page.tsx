@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { ListOrdered, AlertTriangle, Send, Calendar } from 'lucide-react';
+import { ListOrdered, AlertTriangle, Send, Calendar, Save, Loader2 } from 'lucide-react';
 import Movie, { MovieData, Rating } from '@/components/prenomination/movie';
 import { ORDERING_PAGE_LABEL } from '@/lib/constants';
 
@@ -13,14 +13,24 @@ interface MovieSelection {
   ranking: number | null;
 }
 
+interface SelectionState {
+  rating: Rating;
+  ranking: number | null;
+}
+
 export default function PrenominationPage() {
   const [movies, setMovies] = useState<MovieData[]>([]);
-  const [ratings, setRatings] = useState<Map<number, Rating>>(new Map());
-  const [rankings, setRankings] = useState<Map<number, number | null>>(new Map());
+  
+  // Server state (what's saved in DB)
+  const [savedSelections, setSavedSelections] = useState<Map<number, SelectionState>>(new Map());
+  
+  // Local state (current UI state)
+  const [localSelections, setLocalSelections] = useState<Map<number, SelectionState>>(new Map());
+  
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hideRejected, setHideRejected] = useState(() => {
-    // Load from localStorage on initial render (only on client)
     if (typeof window !== 'undefined') {
       return localStorage.getItem('hideRejectedMovies') === 'true';
     }
@@ -28,38 +38,60 @@ export default function PrenominationPage() {
   });
   const modalRef = useRef<HTMLDialogElement>(null);
 
+  // Calculate which movies have unsaved changes
+  const unsavedMovieIds = useMemo(() => {
+    const unsaved = new Set<number>();
+    
+    // Check for changes in local selections
+    localSelections.forEach((local, movieId) => {
+      const saved = savedSelections.get(movieId);
+      if (!saved || saved.rating !== local.rating || saved.ranking !== local.ranking) {
+        unsaved.add(movieId);
+      }
+    });
+    
+    // Check for deletions (was saved, now removed from local)
+    savedSelections.forEach((_, movieId) => {
+      if (!localSelections.has(movieId)) {
+        unsaved.add(movieId);
+      }
+    });
+    
+    return unsaved;
+  }, [localSelections, savedSelections]);
+
+  const hasUnsavedChanges = unsavedMovieIds.size > 0;
+
   // Save hideRejected to localStorage when it changes
   useEffect(() => {
     localStorage.setItem('hideRejectedMovies', String(hideRejected));
   }, [hideRejected]);
 
   useEffect(() => {
-    // Načíst filmy (vždy) a selections (pokud existují)
     const loadData = async () => {
       try {
-        // Nejdřív načíst filmy - to je povinné
+        // Load movies
         const moviesRes = await fetch('/api/movie-prenom');
         if (!moviesRes.ok) throw new Error('Nepodařilo se načíst filmy');
         const moviesData = await moviesRes.json();
         setMovies(moviesData);
         
-        // Zkusit načíst selections - pokud selže, prostě pokračuj bez nich
+        // Try to load selections
         try {
           const selectionsRes = await fetch('/api/movie-selection-prenom');
           if (selectionsRes.ok) {
-            const selectionsData = await selectionsRes.json();
+            const selectionsData: MovieSelection[] = await selectionsRes.json();
             
-            // Převést selections na Map pro rychlý přístup
-            const ratingsMap = new Map();
-            const rankingsMap = new Map();
-            selectionsData.forEach((sel: MovieSelection) => {
-              ratingsMap.set(sel.movieId, sel.rating as Rating);
-              rankingsMap.set(sel.movieId, sel.ranking);
+            const selectionsMap = new Map<number, SelectionState>();
+            selectionsData.forEach((sel) => {
+              selectionsMap.set(sel.movieId, {
+                rating: sel.rating as Rating,
+                ranking: sel.ranking,
+              });
             });
-            setRatings(ratingsMap);
-            setRankings(rankingsMap);
+            setSavedSelections(selectionsMap);
+            setLocalSelections(new Map(selectionsMap)); // Clone for local state
           }
-          // Pokud selections selžou (401, 404, atd.), jen pokračuj bez nich
         } catch {
           console.log('Nenalezeny žádné existující výběry, začínáme znovu');
         }
@@ -74,52 +106,96 @@ export default function PrenominationPage() {
     loadData();
   }, []);
 
-  const handleRatingChange = (movieId: number, rating: Rating | null, ranking: number | null) => {
-    if (rating === null) {
-      // Remove from maps when unselected
-      setRatings(prev => {
-        const next = new Map(prev);
+  const handleRatingChange = useCallback((movieId: number, rating: Rating | null, ranking: number | null) => {
+    setLocalSelections(prev => {
+      const next = new Map(prev);
+      if (rating === null) {
         next.delete(movieId);
-        return next;
+      } else {
+        next.set(movieId, { rating, ranking });
+      }
+      return next;
+    });
+  }, []);
+
+  // Save all changes to server
+  const handleSave = async () => {
+    if (!hasUnsavedChanges) return;
+    
+    setSaving(true);
+    try {
+      // Find all changes
+      const toSave: { movieId: number; rating: Rating; ranking: number | null }[] = [];
+      const toDelete: number[] = [];
+      
+      // New or updated selections
+      localSelections.forEach((local, movieId) => {
+        const saved = savedSelections.get(movieId);
+        if (!saved || saved.rating !== local.rating || saved.ranking !== local.ranking) {
+          toSave.push({ movieId, rating: local.rating, ranking: local.ranking });
+        }
       });
-      setRankings(prev => {
-        const next = new Map(prev);
-        next.delete(movieId);
-        return next;
+      
+      // Deleted selections
+      savedSelections.forEach((_, movieId) => {
+        if (!localSelections.has(movieId)) {
+          toDelete.push(movieId);
+        }
       });
-    } else {
-      setRatings(prev => new Map(prev).set(movieId, rating));
-      setRankings(prev => new Map(prev).set(movieId, ranking));
+      
+      // Batch save - send all at once
+      const response = await fetch('/api/movie-selection-prenom/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ toSave, toDelete }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Nepodařilo se uložit změny');
+      }
+      
+      // Update saved state to match local state
+      setSavedSelections(new Map(localSelections));
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nepodařilo se uložit změny');
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Sort movies by prenom1Order (API only returns movies with prenom1Order)
+  // Sort movies by prenom1Order
   const sortedMovies = useMemo(() => {
     return [...movies].sort((a, b) => (a.prenom1Order ?? 0) - (b.prenom1Order ?? 0));
   }, [movies]);
 
   const filteredMovies = useMemo(() => {
     if (!hideRejected) return sortedMovies;
-    return sortedMovies.filter(movie => ratings.get(movie.id) !== Rating.NO);
-  }, [sortedMovies, ratings, hideRejected]);
+    return sortedMovies.filter(movie => localSelections.get(movie.id)?.rating !== Rating.NO);
+  }, [sortedMovies, localSelections, hideRejected]);
 
   const rejectedCount = useMemo(() => {
-    return Array.from(ratings.values()).filter(r => r === Rating.NO).length;
-  }, [ratings]);
+    let count = 0;
+    localSelections.forEach(sel => {
+      if (sel.rating === Rating.NO) count++;
+    });
+    return count;
+  }, [localSelections]);
 
   const selectedCount = useMemo(() => {
-    return Array.from(ratings.values()).filter(r => r === Rating.YES).length;
-  }, [ratings]);
+    let count = 0;
+    localSelections.forEach(sel => {
+      if (sel.rating === Rating.YES) count++;
+    });
+    return count;
+  }, [localSelections]);
 
   // Check for duplicate rankings among YES movies
   const duplicateRankings = useMemo(() => {
     const yesMovieRankings: number[] = [];
-    ratings.forEach((rating, movieId) => {
-      if (rating === Rating.YES) {
-        const rank = rankings.get(movieId);
-        if (rank !== null && rank !== undefined) {
-          yesMovieRankings.push(rank);
-        }
+    localSelections.forEach((sel) => {
+      if (sel.rating === Rating.YES && sel.ranking !== null) {
+        yesMovieRankings.push(sel.ranking);
       }
     });
     
@@ -133,7 +209,20 @@ export default function PrenominationPage() {
     });
     
     return Array.from(duplicates).sort((a, b) => a - b);
-  }, [ratings, rankings]);
+  }, [localSelections]);
+
+  // Warn user about unsaved changes when leaving
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -169,7 +258,20 @@ export default function PrenominationPage() {
 
       {loading && <p>Načítání filmů...</p>}
 
-      {error && <p className="text-red-500">Chyba: {error}</p>}
+      {error && (
+        <div className="alert alert-error mb-6">
+          <span>Chyba: {error}</span>
+          <button 
+            className="btn btn-sm"
+            onClick={() => {
+              setError(null);
+              window.location.reload();
+            }}
+          >
+            Zkusit znovu
+          </button>
+        </div>
+      )}
 
       {/* Warning for duplicate rankings */}
       {!loading && !error && duplicateRankings.length > 0 && (
@@ -185,19 +287,43 @@ export default function PrenominationPage() {
         </div>
       )}
 
+      {/* Unsaved changes indicator */}
+      {!loading && !error && hasUnsavedChanges && (
+        <div className="alert border-2 border-warning bg-transparent mb-6">
+          <Save className="w-5 h-5 text-warning" />
+          <span>Máte {unsavedMovieIds.size} neuložených změn</span>
+          <button 
+            className="btn btn-success btn-sm gap-2"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Ukládám...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Uložit změny
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
       {!loading && !error && (
         <div className="grid gap-4">
           {filteredMovies.map((movie) => {
-            // Use ratings/rankings state which reflects current client-side changes
-            const currentRating = ratings.get(movie.id) || null;
-            const currentRanking = rankings.get(movie.id) || null;
+            const selection = localSelections.get(movie.id);
             return (
               <Movie 
                 key={movie.id} 
                 id={movie.id} 
                 name={movie.name}
-                initialRating={currentRating}
-                initialRanking={currentRanking}
+                rating={selection?.rating || null}
+                ranking={selection?.ranking || null}
+                hasUnsavedChanges={unsavedMovieIds.has(movie.id)}
                 onRatingChange={handleRatingChange}
               />
             );
@@ -212,7 +338,26 @@ export default function PrenominationPage() {
 
       {/* Final submission button */}
       {!loading && !error && (
-        <div className="mt-8 flex justify-end">
+        <div className="mt-8 flex justify-end gap-4">
+          {hasUnsavedChanges && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="btn btn-success gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Ukládám...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Uložit změny ({unsavedMovieIds.size})
+                </>
+              )}
+            </button>
+          )}
           <button
             onClick={() => modalRef.current?.showModal()}
             className="btn btn-primary gap-2"
@@ -249,4 +394,3 @@ export default function PrenominationPage() {
     </div>
   );
 }
-

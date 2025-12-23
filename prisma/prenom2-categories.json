@@ -1,0 +1,104 @@
+[
+  {
+    "name": "Hudba",
+    "slug": "music",
+    "order": 1,
+    "movies": [
+      "Wicked", "The Brutalist", "Conclave", "Emilia Pérez", "The Wild Robot",
+      "Nosferatu", "Dune: Part Two", "Challengers", "Gladiator II", "Joker: Folie à Deux",
+      "A Complete Unknown", "Anora", "The Substance", "Civil War", "Alien: Romulus"
+    ]
+  },
+  {
+    "name": "Píseň",
+    "slug": "song",
+    "order": 2,
+    "movies": [
+      "Emilia Pérez - El Mal", "Emilia Pérez - Mi Camino", "The Wild Robot - Kiss the Sky",
+      "Moana 2 - We're Back", "Elton John: Never Too Late - Never Too Late",
+      "Better Man - Forbidden Road", "Challengers - Compress/Repress",
+      "Twisters - Ain't No Love in Oklahoma", "Wicked - Popular", "Despicable Me 4 - Double Life"
+    ]
+  },
+  {
+    "name": "Masky a účesy",
+    "slug": "makeup",
+    "order": 3,
+    "movies": [
+      "The Substance", "Nosferatu", "Dune: Part Two", "Wicked", "A Different Man",
+      "The Brutalist", "Emilia Pérez", "Joker: Folie à Deux", "Beetlejuice Beetlejuice",
+      "Gladiator II", "Alien: Romulus", "Furiosa: A Mad Max Saga"
+    ]
+  },
+  {
+    "name": "Zvuk",
+    "slug": "sound",
+    "order": 4,
+    "movies": [
+      "Dune: Part Two", "Wicked", "A Complete Unknown", "Gladiator II", "The Wild Robot",
+      "Twisters", "Alien: Romulus", "Civil War", "Furiosa: A Mad Max Saga", "Deadpool & Wolverine",
+      "The Brutalist", "Nosferatu", "Joker: Folie à Deux"
+    ]
+  },
+  {
+    "name": "Vizuální efekty",
+    "slug": "visual-effects",
+    "order": 5,
+    "movies": [
+      "Dune: Part Two", "Wicked", "Gladiator II", "Kingdom of the Planet of the Apes",
+      "Alien: Romulus", "The Wild Robot", "Furiosa: A Mad Max Saga", "Twisters",
+      "Deadpool & Wolverine", "Civil War", "Beetlejuice Beetlejuice", "Nosferatu"
+    ]
+  },
+  {
+    "name": "Nejlepší mezinárodní film",
+    "slug": "international",
+    "order": 6,
+    "movies": [
+      "Emilia Pérez (Francie)", "The Seed of the Sacred Fig (Německo)", "I'm Still Here (Brazílie)",
+      "Flow (Lotyšsko)", "The Girl with the Needle (Dánsko)", "Kneecap (Irsko)",
+      "Vermiglio (Itálie)", "Touch (Island)", "Waves (Česko)", "From Ground Zero (Palestina)",
+      "Universal Language (Kanada)", "Santosh (Velká Británie)"
+    ]
+  },
+  {
+    "name": "Nejlepší celovečerní dokument",
+    "slug": "documentary",
+    "order": 7,
+    "movies": [
+      "No Other Land", "Soundtrack to a Coup d'Etat", "Sugarcane", "Dahomey",
+      "Will & Harper", "Porcelain War", "Union", "The Bibi Files",
+      "Elton John: Never Too Late", "Super/Man: The Christopher Reeve Story",
+      "Frida", "The Remarkable Life of Ibelin"
+    ]
+  },
+  {
+    "name": "Nejlepší krátkometrážní hraný film",
+    "slug": "short-live-action",
+    "order": 8,
+    "movies": [
+      "Anuja", "A Lien", "I'm Not a Robot", "The Last Ranger", "The Man Who Could Not Remain Silent",
+      "Wander to Wonder", "Incident", "Clodagh", "The Compatriot", "Room Taken"
+    ]
+  },
+  {
+    "name": "Nejlepší krátkometrážní animovaný film",
+    "slug": "short-animated",
+    "order": 9,
+    "movies": [
+      "Beautiful Men", "In the Shadow of the Cypress", "Magic Candies", "Wander to Wonder",
+      "Yuck!", "A Bear Named Wojtek", "Au Revoir Mon Monde", "The 21", "Origami", "Living with the Dead"
+    ]
+  },
+  {
+    "name": "Nejlepší krátkometrážní dokument",
+    "slug": "short-documentary",
+    "order": 10,
+    "movies": [
+      "Death by Numbers", "I Am Ready, Warden", "Incident", "Instruments of a Beating Heart",
+      "The Only Girl in the Orchestra", "Keeper of the Bees", "Eternal Father", "Makayla's Voice",
+      "Once Upon a Time in Ukraine", "Until He's Back"
+    ]
+  }
+]
+

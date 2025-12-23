@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
+    // Cache categories for 5 minutes using Prisma Accelerate
     const categories = await prisma.prenom2Category.findMany({
       orderBy: { order: 'asc' },
       include: {
@@ -14,6 +15,10 @@ export async function GET() {
             movie: { name: 'asc' },
           },
         },
+      },
+      cacheStrategy: {
+        ttl: 300, // 5 minutes
+        swr: 60,  // Serve stale while revalidating for 1 minute
       },
     });
 
@@ -29,7 +34,12 @@ export async function GET() {
       })),
     }));
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        // Also cache on the edge/browser for 1 minute
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      },
+    });
   } catch (error) {
     console.error('Error fetching prenom2 categories:', error);
     return NextResponse.json(
@@ -38,4 +48,3 @@ export async function GET() {
     );
   }
 }
-

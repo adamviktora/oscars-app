@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Check, HelpCircle, X } from 'lucide-react';
 
 export interface MovieData {
@@ -20,90 +19,44 @@ export enum Rating {
 interface MovieProps {
   id: number;
   name: string;
-  initialRating?: Rating | null;
-  initialRanking?: number | null;
-  onRatingChange?: (movieId: number, rating: Rating | null, ranking: number | null) => void;
+  rating: Rating | null;
+  ranking: number | null;
+  hasUnsavedChanges?: boolean;
+  onRatingChange: (movieId: number, rating: Rating | null, ranking: number | null) => void;
 }
 
-export default function Movie({ id, name, initialRating, initialRanking, onRatingChange }: MovieProps) {
-  const [selectedRating, setSelectedRating] = useState<Rating | null>(initialRating || null);
-  const [ranking, setRanking] = useState<number | null>(initialRanking || null);
-  const [isSaving, setIsSaving] = useState(false);
+export default function Movie({ 
+  id, 
+  name, 
+  rating, 
+  ranking, 
+  hasUnsavedChanges,
+  onRatingChange 
+}: MovieProps) {
 
-  // Sync internal state with props when they change (e.g., after filter toggle)
-  useEffect(() => {
-    setSelectedRating(initialRating || null);
-    setRanking(initialRanking || null);
-  }, [initialRating, initialRanking]);
-
-  const handleRatingClick = (rating: Rating) => {
+  const handleRatingClick = (newRating: Rating) => {
     // If clicking on the same rating, unselect it
-    if (selectedRating === rating) {
-      setSelectedRating(null);
-      setRanking(null);
-      onRatingChange?.(id, null, null);
+    if (rating === newRating) {
+      onRatingChange(id, null, null);
     } else {
-      setSelectedRating(rating);
-      const newRanking = rating === Rating.YES ? ranking : null;
-      onRatingChange?.(id, rating, newRanking);
+      const newRanking = newRating === Rating.YES ? ranking : null;
+      onRatingChange(id, newRating, newRanking);
     }
   };
 
   const handleRankingChange = (newRank: number) => {
-    setRanking(newRank);
-    if (selectedRating === Rating.YES) {
-      onRatingChange?.(id, Rating.YES, newRank);
+    if (rating === Rating.YES) {
+      onRatingChange(id, Rating.YES, newRank);
     }
   };
 
-  // Track if initial load is done to prevent saving on mount
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    setIsInitialized(true);
-  }, []);
-
-  // Ukládání změn do databáze
-  useEffect(() => {
-    if (!isInitialized) return;
-
-    const saveSelection = async () => {
-      setIsSaving(true);
-      try {
-        if (selectedRating === null) {
-          // Delete selection
-          await fetch(`/api/movie-selection-prenom?movieId=${id}`, {
-            method: 'DELETE',
-          });
-        } else {
-          // Save selection
-          await fetch('/api/movie-selection-prenom', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              movieId: id,
-              rating: selectedRating,
-              ranking: selectedRating === Rating.YES ? ranking : null,
-            }),
-          });
-        }
-      } catch (error) {
-        console.error('Error saving selection:', error);
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
-    saveSelection();
-  }, [selectedRating, ranking, id, isInitialized]);
-
   return (
-    <div className="border p-4 rounded-lg relative">
-      {isSaving && (
+    <div className={`border p-4 rounded-lg relative transition-all ${
+      hasUnsavedChanges ? 'border-warning bg-warning/5' : ''
+    }`}>
+      {hasUnsavedChanges && (
         <div className="absolute top-2 right-2">
-          <span className="loading loading-spinner loading-sm"></span>
+          <span className="badge badge-warning badge-xs">neuloženo</span>
         </div>
       )}
       <h2 className="text-xl font-semibold mb-3">{name}</h2>
@@ -116,7 +69,7 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
             type="radio"
             name={`movie-${id}`}
             className="radio radio-success"
-            checked={selectedRating === Rating.YES}
+            checked={rating === Rating.YES}
             readOnly
           />
           <Check className="w-6 h-6 text-green-500" strokeWidth={3} />
@@ -129,7 +82,7 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
             type="radio"
             name={`movie-${id}`}
             className="radio radio-warning"
-            checked={selectedRating === Rating.MAYBE}
+            checked={rating === Rating.MAYBE}
             readOnly
           />
           <HelpCircle className="w-6 h-6 text-yellow-500" strokeWidth={2.5} />
@@ -142,13 +95,13 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
             type="radio"
             name={`movie-${id}`}
             className="radio radio-error"
-            checked={selectedRating === Rating.NO}
+            checked={rating === Rating.NO}
             readOnly
           />
           <X className="w-6 h-6 text-red-500" strokeWidth={3} />
         </div>
       </div>
-      {selectedRating === Rating.YES && (
+      {rating === Rating.YES && (
         <div className="mt-4">
           <label className="block text-sm font-medium mb-2">
             Pořadí (1-10):
@@ -174,4 +127,3 @@ export default function Movie({ id, name, initialRating, initialRanking, onRatin
     </div>
   );
 }
-
