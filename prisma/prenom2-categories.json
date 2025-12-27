@@ -1,104 +1,251 @@
 [
   {
-    "name": "Hudba",
-    "slug": "music",
+    "name": "Casting",
+    "slug": "casting",
     "order": 1,
     "movies": [
-      "Wicked", "The Brutalist", "Conclave", "Emilia Pérez", "The Wild Robot",
-      "Nosferatu", "Dune: Part Two", "Challengers", "Gladiator II", "Joker: Folie à Deux",
-      "A Complete Unknown", "Anora", "The Substance", "Civil War", "Alien: Romulus"
+      "Citová hodnota",
+      "Čarodějka: Druhá část",
+      "Frankenstein",
+      "Hamnet",
+      "Hodina zmizení",
+      "Hříšníci",
+      "Jedna bitva za druhou",
+      "Sirat",
+      "Tajný agent",
+      "Velký Marty"
+    ]
+  },
+  {
+    "name": "Kamera",
+    "slug": "camera",
+    "order": 2,
+    "movies": [
+      "Balada o malém hráči",
+      "Bugonia",
+      "Citová hodnota",
+      "Čarodějka: Druhá část",
+      "Die My Love",
+      "F1",
+      "Frankenstein",
+      "Hamnet",
+      "Hříšníci",
+      "Jedna bitva za druhou",
+      "Nová vlna",
+      "Pohled do slunce",
+      "Sirat",
+      "Smutný song",
+      "Sny o vlacích",
+      "Velký Marty"
+    ]
+  },
+  {
+    "name": "Hudba",
+    "slug": "music",
+    "order": 3,
+    "movies": [
+      "Avatar: Oheň a popel",
+      "Bugonia",
+      "Captain America: Nový svět",
+      "Čarodějka: Druhá část",
+      "Diane Warren: Neoblomná",
+      "Dům plný dynamitu",
+      "F1",
+      "Frankenstein",
+      "Hamnet",
+      "Hedda",
+      "Hříšníci",
+      "Jay Kelly",
+      "Jedna bitva za druhou",
+      "Na nože: Probuzení mrtvého muže",
+      "Norimberk",
+      "Pravda a vlastizrada",
+      "Sirat",
+      "Sny o vlacích",
+      "Tron: Ares",
+      "Velký Marty"
     ]
   },
   {
     "name": "Píseň",
     "slug": "song",
-    "order": 2,
+    "order": 4,
     "movies": [
-      "Emilia Pérez - El Mal", "Emilia Pérez - Mi Camino", "The Wild Robot - Kiss the Sky",
-      "Moana 2 - We're Back", "Elton John: Never Too Late - Never Too Late",
-      "Better Man - Forbidden Road", "Challengers - Compress/Repress",
-      "Twisters - Ain't No Love in Oklahoma", "Wicked - Popular", "Despicable Me 4 - Double Life"
+      "Ať žije Verdi! – \"Sweet Dreams of Joy\"",
+      "Avatar: Oheň a popel – \"Dream as One\"",
+      "Až na dno – \"Highest 2 Lowest\"",
+      "Balada o ostrově Wallis – \"Our Love\"",
+      "Billy Idol by už dávno měl být mrtvý – \"Dying to Live\"",
+      "Čarodějka: Druhá část – \"The Girl in the Bubble\"",
+      "Čarodějka: Druhá část – \"No Place Like Home\"",
+      "Diane Warren: Neoblomná – \"Dear Me\"",
+      "F1 – \"Drive\"",
+      "Hříšníci – \"I Lied to You\"",
+      "Hříšníci – \"Last Time (I Seen the Sun)\"",
+      "K-pop: Lovkyně démonů – \"Golden\"",
+      "Poznej mě v dobrém světle – \"Salt Then Sour Then Sweet\"",
+      "Sny o vlacích – \"Train Dreams\"",
+      "Tron: Ares – \"As Alive as You Need Me to Be\""
     ]
   },
   {
-    "name": "Masky a účesy",
+    "name": "Masky",
     "slug": "makeup",
-    "order": 3,
+    "order": 5,
     "movies": [
-      "The Substance", "Nosferatu", "Dune: Part Two", "Wicked", "A Different Man",
-      "The Brutalist", "Emilia Pérez", "Joker: Folie à Deux", "Beetlejuice Beetlejuice",
-      "Gladiator II", "Alien: Romulus", "Furiosa: A Mad Max Saga"
+      "Čarodějka: Druhá část",
+      "Dvě tváře zločinu",
+      "Frankenstein",
+      "Hříšníci",
+      "Jedna bitva za druhou",
+      "Mlátička",
+      "Národní poklad",
+      "Norimberk",
+      "Ošklivá sestra",
+      "Velký Marty"
     ]
   },
   {
     "name": "Zvuk",
     "slug": "sound",
-    "order": 4,
+    "order": 6,
     "movies": [
-      "Dune: Part Two", "Wicked", "A Complete Unknown", "Gladiator II", "The Wild Robot",
-      "Twisters", "Alien: Romulus", "Civil War", "Furiosa: A Mad Max Saga", "Deadpool & Wolverine",
-      "The Brutalist", "Nosferatu", "Joker: Folie à Deux"
+      "Avatar: Oheň a popel",
+      "Frankenstein",
+      "F1",
+      "Hříšníci",
+      "Jedna bitva za druhou",
+      "Mission: Impossible – Poslední zúčtování",
+      "Sirat",
+      "Springsteen: Vysvoboď mě z neznáma",
+      "Superman"
     ]
   },
   {
     "name": "Vizuální efekty",
     "slug": "visual-effects",
-    "order": 5,
+    "order": 7,
     "movies": [
-      "Dune: Part Two", "Wicked", "Gladiator II", "Kingdom of the Planet of the Apes",
-      "Alien: Romulus", "The Wild Robot", "Furiosa: A Mad Max Saga", "Twisters",
-      "Deadpool & Wolverine", "Civil War", "Beetlejuice Beetlejuice", "Nosferatu"
+      "Autobus naděje",
+      "Avatar: Oheň a popel",
+      "Čarodějka: Druhá část",
+      "F1",
+      "Frankenstein",
+      "Hříšníci",
+      "Jurský svět: Znovuzrození",
+      "Pasáž",
+      "Superman",
+      "Tron: Ares"
     ]
   },
   {
     "name": "Nejlepší mezinárodní film",
     "slug": "international",
-    "order": 6,
+    "order": 8,
     "movies": [
-      "Emilia Pérez (Francie)", "The Seed of the Sacred Fig (Německo)", "I'm Still Here (Brazílie)",
-      "Flow (Lotyšsko)", "The Girl with the Needle (Dánsko)", "Kneecap (Irsko)",
-      "Vermiglio (Itálie)", "Touch (Island)", "Waves (Česko)", "From Ground Zero (Palestina)",
-      "Universal Language (Kanada)", "Santosh (Velká Británie)"
+      "Belén (Argentina)",
+      "Citová hodnota (Norsko)",
+      "Dort pro prezidenta (Irák)",
+      "Drobná nehoda (Francie)",
+      "Hlas Hind Radžab (Tunisko)",
+      "Levoruká (Taiwan)",
+      "Na cestě domů (Indie)",
+      "Národní poklad (Japonsko)",
+      "Není jiná možnost (Jižní Korea)",
+      "Palestina 36 (Palestina)",
+      "Pohled do slunce (Německo)",
+      "Pozdní směna (Švýcarsko)",
+      "Sirat (Španělsko)",
+      "Tajný agent (Brazílie)",
+      "Vše, co z tebe zbylo (Jordánsko)"
     ]
   },
   {
     "name": "Nejlepší celovečerní dokument",
     "slug": "documentary",
-    "order": 7,
+    "order": 9,
     "movies": [
-      "No Other Land", "Soundtrack to a Coup d'Etat", "Sugarcane", "Dahomey",
-      "Will & Harper", "Porcelain War", "Union", "The Bibi Files",
-      "Elton John: Never Too Late", "Super/Man: The Christopher Reeve Story",
-      "Frida", "The Remarkable Life of Ibelin"
+      "Apokalypsa v tropech",
+      "Dokonalá sousedka",
+      "2000 metrů do Andrijivky",
+      "Jaképak soužití, sakra!",
+      "Krotitelka milenek",
+      "Lámání skal",
+      "Liat v zajetí",
+      "Mé nežádoucí přítelkyně: Část I – Poslední moskevské vysílání",
+      "Pan Nikdo proti Putinovi",
+      "Poznej mě v dobrém světle",
+      "Příběhy z dalekého severu",
+      "Řešení jménem Alabama",
+      "Sémě",
+      "Utajeno",
+      "Yanuni"
     ]
   },
   {
     "name": "Nejlepší krátkometrážní hraný film",
     "slug": "short-live-action",
-    "order": 8,
+    "order": 10,
     "movies": [
-      "Anuja", "A Lien", "I'm Not a Robot", "The Last Ranger", "The Man Who Could Not Remain Silent",
-      "Wander to Wonder", "Incident", "Clodagh", "The Compatriot", "Room Taken"
+      "ADO",
+      "Dorothin kamarád",
+      "Dvě osoby vyměňující si sliny",
+      "Extremista",
+      "Hřeben s perlami",
+      "Chlapec s bílou kůží",
+      "Kámen, nůžky, papír",
+      "Menstruační drama Jane Austen",
+      "Přes překážky",
+      "Punčocháče",
+      "Řezníkova skvrna",
+      "Táta není doma",
+      "Za hranicemi ticha",
+      "Zpěváci",
+      "Žlutá"
     ]
   },
   {
     "name": "Nejlepší krátkometrážní animovaný film",
     "slug": "short-animated",
-    "order": 9,
+    "order": 11,
     "movies": [
-      "Beautiful Men", "In the Shadow of the Cypress", "Magic Candies", "Wander to Wonder",
-      "Yuck!", "A Bear Named Wojtek", "Au Revoir Mon Monde", "The 21", "Origami", "Living with the Dead"
+      "Autokar",
+      "Dívka, která plakala perly",
+      "Duch Quinty",
+      "Éiru",
+      "Hra na boha",
+      "Hurikán",
+      "Karton",
+      "Motýlek",
+      "Navždy zelený",
+      "Noční boty",
+      "Ostych stromů",
+      "Plán na důchod",
+      "Sněžný medvěd",
+      "Tři sestry",
+      "Zemřela jsem v Irpini"
     ]
   },
   {
     "name": "Nejlepší krátkometrážní dokument",
     "slug": "short-documentary",
-    "order": 10,
+    "order": 12,
     "movies": [
-      "Death by Numbers", "I Am Ready, Warden", "Incident", "Instruments of a Beating Heart",
-      "The Only Girl in the Orchestra", "Keeper of the Bees", "Eternal Father", "Makayla's Voice",
-      "Once Upon a Time in Ukraine", "Until He's Back"
+      "Dokonalá podivnost",
+      "Ďábel má napilno",
+      "Honba za časem",
+      "Mizerná rukojmí",
+      "Na léčivé zemi, ptáci sedí",
+      "Ozbrojen objektivem: Život a smrt Brenta Renauda",
+      "Poslední dny na jezeře Trinity",
+      "Rovinná volba",
+      "Spekulanti se smrtí",
+      "Tlukot srdce",
+      "Učebna č. 4",
+      "Už žádné děti: Byly a už nejsou",
+      "V roli kulis",
+      "Všechny prázdné pokoje",
+      "Všechny zdi se zřítily"
     ]
   }
 ]
-

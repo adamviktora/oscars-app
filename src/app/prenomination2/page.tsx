@@ -220,7 +220,7 @@ export default function Prenomination2Page() {
       </div>
 
       <p className="text-base-content/70 mb-6">
-        V každé kategorii vyberte přesně <strong>5 filmů</strong>, které by podle vás měly postoupit do nominací.
+        V každé kategorii vyberte přesně <strong>5 filmů</strong>, o kterých si myslíte, že budou nominovány.
       </p>
 
       {loading && <p>Načítání kategorií...</p>}

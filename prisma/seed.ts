@@ -12,29 +12,33 @@ interface CategoryData {
 }
 
 async function main() {
+  // Reset the movie ID sequence to the max existing ID
+  // This fixes issues where the sequence gets out of sync
+  await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('movie', 'id'), COALESCE((SELECT MAX(id) FROM movie), 0) + 1, false)`;
+
   // ========================
   // Seed Movies for Prenom 1.0
   // ========================
-  const moviesPath = path.join(__dirname, 'movies.json');
-  const moviesData = JSON.parse(fs.readFileSync(moviesPath, 'utf-8'));
+  // const moviesPath = path.join(__dirname, 'movies.json');
+  // const moviesData = JSON.parse(fs.readFileSync(moviesPath, 'utf-8'));
 
-  console.log('Seeding movies for Prenom 1.0...');
+  // console.log('Seeding movies for Prenom 1.0...');
 
-  for (const movie of moviesData) {
-    await prisma.movie.upsert({
-      where: { id: movie.id },
-      update: {
-        name: movie.name,
-        prenom1Order: movie.id,
-      },
-      create: {
-        id: movie.id,
-        name: movie.name,
-        prenom1Order: movie.id,
-      },
-    });
-    console.log(`  Added/Updated: ${movie.name}`);
-  }
+  // for (const movie of moviesData) {
+  //   await prisma.movie.upsert({
+  //     where: { id: movie.id },
+  //     update: {
+  //       name: movie.name,
+  //       prenom1Order: movie.id,
+  //     },
+  //     create: {
+  //       id: movie.id,
+  //       name: movie.name,
+  //       prenom1Order: movie.id,
+  //     },
+  //   });
+  //   console.log(`  Added/Updated: ${movie.name}`);
+  // }
 
   // ========================
   // Seed Categories and Movies for Prenom 2.0

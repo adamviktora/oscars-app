@@ -28,10 +28,13 @@ export async function GET() {
       name: category.name,
       slug: category.slug,
       order: category.order,
-      movies: category.movies.map((cm) => ({
-        id: cm.movie.id,
-        name: cm.movie.name,
-      })),
+      movies: category.movies
+        .map((cm) => ({
+          id: cm.movie.id,
+          name: cm.movie.name,
+        }))
+        // Sort using Czech locale (handles Č after C, CH after H, Ř after R, etc.)
+        .sort((a, b) => a.name.localeCompare(b.name, 'cs')),
     }));
 
     return NextResponse.json(result, {
