@@ -33,15 +33,18 @@ export default async function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-4">
-          Vítej, {session.user.name}!
-        </h2>
+        <h2 className="text-2xl font-bold mb-4">Vítej, {session.user.name}!</h2>
         <p className="text-base-content/70 mb-6">
           Začni s tipováním letošních oscarových sázek!
         </p>
-        <Link href="/prenomination" className="btn btn-primary">
-          Prenominační kolo
-        </Link>
+        <div className="flex flex-col gap-3 items-center">
+          <Link href="/prenomination" className="btn btn-primary">
+            Prenominační kolo
+          </Link>
+          <Link href="/prenomination2" className="btn btn-primary">
+            Prenominační kolo 2.0
+          </Link>
+        </div>
       </div>
     </div>
   );
