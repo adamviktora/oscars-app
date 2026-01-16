@@ -133,7 +133,9 @@ export function SidebarMenu() {
                             <span className="flex items-center gap-3 py-2 px-4 rounded-lg text-base-content/40 cursor-not-allowed text-sm">
                               <span className="opacity-40">{subItem.icon}</span>
                               {subItem.label}
-                              <span className="badge badge-xs badge-ghost ml-auto">Již brzy</span>
+                              <span className="badge badge-xs badge-ghost ml-auto">
+                                Již brzy
+                              </span>
                             </span>
                           )}
                         </li>
@@ -145,7 +147,9 @@ export function SidebarMenu() {
                 <span className="flex items-center gap-3 py-3 px-4 rounded-lg text-base-content/40 cursor-not-allowed">
                   <span className="opacity-40">{item.icon}</span>
                   {item.label}
-                  <span className="badge badge-sm badge-ghost ml-auto">Již brzy</span>
+                  <span className="badge badge-sm badge-ghost ml-auto">
+                    Již brzy
+                  </span>
                 </span>
               )}
             </li>
@@ -155,7 +159,9 @@ export function SidebarMenu() {
         {/* Admin Section */}
         {userIsAdmin && (
           <>
-            <div className="divider px-4 text-xs text-base-content/50">Admin mód</div>
+            <div className="divider px-4 text-xs text-base-content/50">
+              Admin mód
+            </div>
             <ul className="menu px-4 gap-1">
               <li>
                 <Link
@@ -167,6 +173,16 @@ export function SidebarMenu() {
                   Uživatelé
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/admin/prenom1"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
+                >
+                  <span className="text-amber-500">🎬</span>
+                  Prenominační kolo - tipy účastníků
+                </Link>
+              </li>
             </ul>
           </>
         )}
@@ -174,4 +190,3 @@ export function SidebarMenu() {
     </>
   );
 }
-

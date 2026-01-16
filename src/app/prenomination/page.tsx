@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ListOrdered, AlertTriangle, Send, Calendar, Save, Loader2 } from 'lucide-react';
 import Movie, { MovieData, Rating } from '@/components/prenomination/movie';
 import { ORDERING_PAGE_LABEL } from '@/lib/constants';
@@ -19,6 +19,7 @@ interface SelectionState {
 }
 
 export default function PrenominationPage() {
+  const router = useRouter();
   const [movies, setMovies] = useState<MovieData[]>([]);
   
   // Server state (what's saved in DB)
@@ -29,6 +30,7 @@ export default function PrenominationPage() {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [navigatingToOrdering, setNavigatingToOrdering] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hideRejected, setHideRejected] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -164,6 +166,17 @@ export default function PrenominationPage() {
     }
   };
 
+  // Save and navigate to ordering page
+  const handleGoToOrdering = async () => {
+    setNavigatingToOrdering(true);
+    
+    if (hasUnsavedChanges) {
+      await handleSave();
+    }
+    
+    router.push('/prenomination/ordering');
+  };
+
   // Sort movies by prenom1Order
   const sortedMovies = useMemo(() => {
     return [...movies].sort((a, b) => (a.prenom1Order ?? 0) - (b.prenom1Order ?? 0));
@@ -230,15 +243,25 @@ export default function PrenominationPage() {
         <h1 className="text-2xl font-bold">Prenominační kolo</h1>
         
         <div className="flex items-center gap-4 flex-wrap">
-          {/* Link to ordering page */}
+          {/* Button to ordering page (saves first) */}
           {selectedCount > 0 && (
-            <Link
-              href="/prenomination/ordering"
+            <button
+              onClick={handleGoToOrdering}
+              disabled={navigatingToOrdering || saving}
               className="btn btn-success btn-sm gap-2"
             >
-              <ListOrdered className="w-4 h-4" />
-              {ORDERING_PAGE_LABEL} ({selectedCount})
-            </Link>
+              {navigatingToOrdering ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {hasUnsavedChanges ? 'Ukládám...' : 'Načítání...'}
+                </>
+              ) : (
+                <>
+                  <ListOrdered className="w-4 h-4" />
+                  {ORDERING_PAGE_LABEL} ({selectedCount})
+                </>
+              )}
+            </button>
           )}
 
           {/* Filter toggle */}

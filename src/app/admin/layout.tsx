@@ -38,6 +38,12 @@ export default async function AdminLayout({
               >
                 Uživatelé
               </Link>
+              <Link 
+                href="/admin/prenom1" 
+                className="btn btn-ghost btn-sm"
+              >
+                Prenominační kolo - tipy účastníků
+              </Link>
             </nav>
           </div>
         </div>
