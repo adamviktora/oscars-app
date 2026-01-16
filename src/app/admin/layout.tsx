@@ -31,7 +31,7 @@ export default async function AdminLayout({
           <div className="flex items-center gap-4">
             <span className="text-xl">⚙️</span>
             <h2 className="font-semibold text-lg">Admin mód</h2>
-            <nav className="flex gap-2 ml-4">
+            <nav className="flex gap-2 ml-4 flex-wrap">
               <Link 
                 href="/admin/users" 
                 className="btn btn-ghost btn-sm"
@@ -42,7 +42,13 @@ export default async function AdminLayout({
                 href="/admin/prenom1" 
                 className="btn btn-ghost btn-sm"
               >
-                Prenominační kolo - tipy účastníků
+                Prenominační kolo
+              </Link>
+              <Link 
+                href="/admin/prenom2" 
+                className="btn btn-ghost btn-sm"
+              >
+                Prenominační kolo 2.0
               </Link>
             </nav>
           </div>
