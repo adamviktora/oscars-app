@@ -89,7 +89,7 @@ export function Prenom1GuessesClient({ users, title, showAllMovies = false, view
               {selectedUser.rankings.length > 0 ? (
                 <ol className="space-y-2">
                   {selectedUser.rankings.map((item) => {
-                    const canShowMovie = showAllMovies || viewerFinalized || selectedUser.finalSubmitted;
+                    const canShowMovie = showAllMovies || (viewerFinalized && selectedUser.finalSubmitted);
                     return (
                       <li
                         key={item.ranking}

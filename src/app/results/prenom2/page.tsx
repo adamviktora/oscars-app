@@ -88,7 +88,7 @@ export default async function Prenom2ResultsPage() {
     <Prenom2GuessesClient
       users={usersData}
       title="Výsledky - Prenominační kolo 2.0"
-      showAllMovies
+      viewerFinalized
     />
   );
 }

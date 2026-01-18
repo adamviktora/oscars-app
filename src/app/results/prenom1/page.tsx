@@ -66,7 +66,7 @@ export default async function Prenom1ResultsPage() {
     <Prenom1GuessesClient
       users={usersData}
       title="Výsledky - Prenominační kolo"
-      showAllMovies
+      viewerFinalized
     />
   );
 }

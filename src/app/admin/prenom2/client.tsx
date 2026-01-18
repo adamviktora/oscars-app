@@ -119,7 +119,7 @@ export function Prenom2GuessesClient({ users, title, showAllMovies = false, view
                 const isExpanded = expandedCategories.has(cat.categoryId);
                 const isComplete = cat.movies.length === 5;
                 const hasSelections = cat.movies.length > 0;
-                const canShowMovies = showAllMovies || viewerFinalized || selectedUser.finalSubmitted;
+                const canShowMovies = showAllMovies || (viewerFinalized && selectedUser.finalSubmitted);
 
                 return (
                   <div
