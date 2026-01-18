@@ -6,6 +6,8 @@ interface MovieStats {
   name: string;
   points: number;
   frequency: number;
+  bestPosition: number; // Best (lowest) ranking position
+  position: number; // Display position (can be same for ties)
 }
 
 export default async function AdminPrenom1PreferencesPage() {
@@ -43,12 +45,15 @@ export default async function AdminPrenom1PreferencesPage() {
     },
   });
 
-  // Calculate points and frequency for each movie
-  const movieStatsMap = new Map<number, { points: number; frequency: number }>();
+  // Calculate points, frequency, and best position for each movie
+  const movieStatsMap = new Map<
+    number,
+    { points: number; frequency: number; bestPosition: number }
+  >();
 
-  // Initialize all movies with 0 points and 0 frequency
+  // Initialize all movies with 0 points, 0 frequency, and worst position (11)
   movies.forEach((movie) => {
-    movieStatsMap.set(movie.id, { points: 0, frequency: 0 });
+    movieStatsMap.set(movie.id, { points: 0, frequency: 0, bestPosition: 11 });
   });
 
   // Calculate stats from selections
@@ -59,28 +64,66 @@ export default async function AdminPrenom1PreferencesPage() {
       const points = 11 - selection.ranking;
       stats.points += points;
       stats.frequency += 1;
+      // Track best (lowest) position
+      if (selection.ranking < stats.bestPosition) {
+        stats.bestPosition = selection.ranking;
+      }
     }
   });
 
   // Create sorted array of movie stats (excluding movies with 0 points)
-  const movieStats: MovieStats[] = movies
+  const sortedMovies = movies
     .map((movie) => {
-      const stats = movieStatsMap.get(movie.id) || { points: 0, frequency: 0 };
+      const stats = movieStatsMap.get(movie.id) || {
+        points: 0,
+        frequency: 0,
+        bestPosition: 11,
+      };
       return {
         id: movie.id,
         name: movie.name,
         points: stats.points,
         frequency: stats.frequency,
+        bestPosition: stats.bestPosition,
+        position: 0, // Will be assigned after sorting
       };
     })
     .filter((movie) => movie.points > 0)
     .sort((a, b) => {
-      // Sort by points descending, then frequency descending as tiebreaker
+      // Sort by points descending
       if (b.points !== a.points) {
         return b.points - a.points;
       }
-      return b.frequency - a.frequency;
+      // Then by frequency descending
+      if (b.frequency !== a.frequency) {
+        return b.frequency - a.frequency;
+      }
+      // Then by best position ascending (lower = better)
+      return a.bestPosition - b.bestPosition;
     });
+
+  // Assign display positions (same position for identical stats)
+  const movieStats: MovieStats[] = sortedMovies.reduce<MovieStats[]>(
+    (acc, movie, index) => {
+      let position = 1;
+      if (index > 0) {
+        const prev = acc[index - 1];
+        // If stats are same as previous, use same position
+        if (
+          movie.points === prev.points &&
+          movie.frequency === prev.frequency &&
+          movie.bestPosition === prev.bestPosition
+        ) {
+          position = prev.position;
+        } else {
+          position = index + 1;
+        }
+      }
+      acc.push({ ...movie, position });
+      return acc;
+    },
+    []
+  );
 
   return (
     <Prenom1PreferencesClient

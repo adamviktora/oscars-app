@@ -5,6 +5,8 @@ interface MovieStats {
   name: string;
   points: number;
   frequency: number;
+  bestPosition: number;
+  position: number;
 }
 
 interface Props {
@@ -31,19 +33,19 @@ export function Prenom1PreferencesClient({ movies, maxFrequency }: Props) {
             </tr>
           </thead>
           <tbody>
-            {movies.map((movie, index) => (
+            {movies.map((movie) => (
               <tr key={movie.id} className="hover:bg-base-200/50">
                 <td className="text-center">
                   <span
                     className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold ${
-                      index < 3
+                      movie.position <= 3
                         ? 'bg-amber-500 text-gray-900'
-                        : index < 10
+                        : movie.position <= 10
                         ? 'bg-amber-500/30 text-amber-200'
                         : 'bg-base-300 text-base-content/60'
                     }`}
                   >
-                    {index + 1}
+                    {movie.position}
                   </span>
                 </td>
                 <td>

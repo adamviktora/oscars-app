@@ -75,7 +75,9 @@ export default async function AdminPrenom2Page() {
       categorySelections: categories.map((cat) => ({
         categoryId: cat.id,
         categoryName: cat.name,
-        movies: selectionsByCategory.get(cat.id) || [],
+        movies: (selectionsByCategory.get(cat.id) || []).sort((a, b) =>
+          a.localeCompare(b, 'cs')
+        ),
       })),
     };
   });
