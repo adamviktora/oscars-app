@@ -55,6 +55,9 @@ export default async function AdminLayout({
                 <Link href="/admin/prenom2" className="btn btn-ghost btn-xs">
                   Tipy účastníků
                 </Link>
+                <Link href="/admin/prenom2-stats" className="btn btn-ghost btn-xs">
+                  Statistiky kategorií
+                </Link>
               </div>
             </nav>
           </div>
