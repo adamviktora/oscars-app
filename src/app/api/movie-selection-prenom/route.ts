@@ -49,6 +49,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { prenom1FinalSubmitted: true },
+    });
+
+    if (user?.prenom1FinalSubmitted) {
+      return NextResponse.json(
+        { error: 'Final submission already completed' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { movieId, rating, ranking } = body;
 
@@ -101,6 +113,18 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { prenom1FinalSubmitted: true },
+    });
+
+    if (user?.prenom1FinalSubmitted) {
+      return NextResponse.json(
+        { error: 'Final submission already completed' },
+        { status: 403 }
       );
     }
 

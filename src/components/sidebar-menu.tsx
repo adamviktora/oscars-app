@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ORDERING_PAGE_LABEL, isAdmin } from '@/lib/constants';
 import { useSession } from '@/lib/auth-client';
 
@@ -9,6 +9,33 @@ export function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
   const userIsAdmin = isAdmin(session?.user?.email);
+  const [finalStatus, setFinalStatus] = useState<{
+    prenom1FinalSubmitted: boolean;
+    prenom2FinalSubmitted: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    const loadFinalStatus = async () => {
+      if (!session?.user?.id) {
+        setFinalStatus(null);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/user/final-submissions');
+        if (!response.ok) return;
+        const data = await response.json();
+        setFinalStatus({
+          prenom1FinalSubmitted: Boolean(data.prenom1FinalSubmitted),
+          prenom2FinalSubmitted: Boolean(data.prenom2FinalSubmitted),
+        });
+      } catch {
+        setFinalStatus(null);
+      }
+    };
+
+    loadFinalStatus();
+  }, [session?.user?.id]);
 
   const menuItems = [
     {
@@ -38,6 +65,23 @@ export function SidebarMenu() {
       icon: '🏆',
     },
   ];
+
+  const resultsItems = [
+    finalStatus?.prenom1FinalSubmitted
+      ? {
+          label: 'Výsledky - prenominační kolo',
+          href: '/results/prenom1',
+          icon: '📊',
+        }
+      : null,
+    finalStatus?.prenom2FinalSubmitted
+      ? {
+          label: 'Výsledky - prenominační kolo 2.0',
+          href: '/results/prenom2',
+          icon: '📊',
+        }
+      : null,
+  ].filter(Boolean) as { label: string; href: string; icon: string }[];
 
   return (
     <>
@@ -155,6 +199,28 @@ export function SidebarMenu() {
             </li>
           ))}
         </ul>
+
+        {!userIsAdmin && resultsItems.length > 0 && (
+          <>
+            <div className="divider px-4 text-xs text-base-content/50">
+              Výsledky
+            </div>
+            <ul className="menu px-4 gap-1">
+              {resultsItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
+                  >
+                    <span className="text-amber-500">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
 
         {/* Admin Section */}
         {userIsAdmin && (

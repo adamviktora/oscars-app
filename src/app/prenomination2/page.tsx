@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { Send, Calendar, ChevronDown, ChevronUp, Check, Save, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Send, ChevronDown, ChevronUp, Check, Save, Loader2 } from 'lucide-react';
 import MovieCheckbox from '@/components/prenom2/movie-checkbox';
 
 interface Movie {
@@ -35,6 +36,8 @@ export default function Prenomination2Page() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
+  const [finalSubmitted, setFinalSubmitted] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
   const modalRef = useRef<HTMLDialogElement>(null);
 
   // Helper to create selection key
@@ -114,6 +117,17 @@ export default function Prenomination2Page() {
           console.log('Nenalezeny žádné existující výběry');
         }
 
+        // Load final submission status
+        try {
+          const statusRes = await fetch('/api/user/final-submissions');
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            setFinalSubmitted(Boolean(statusData.prenom2FinalSubmitted));
+          }
+        } catch {
+          console.log('Nepodařilo se načíst stav finálního odevzdání');
+        }
+
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Nepodařilo se načíst data');
@@ -137,6 +151,7 @@ export default function Prenomination2Page() {
   };
 
   const handleToggleSelection = useCallback((categoryId: number, movieId: number, selected: boolean) => {
+    if (finalSubmitted) return;
     const key = getSelectionKey(categoryId, movieId);
     
     setLocalSelections((prev) => {
@@ -156,11 +171,12 @@ export default function Prenomination2Page() {
       }
       return next;
     });
-  }, []);
+  }, [finalSubmitted]);
 
   // Save all changes to server
-  const handleSave = async () => {
-    if (!hasUnsavedChanges) return;
+  const handleSave = async (): Promise<boolean> => {
+    if (finalSubmitted) return false;
+    if (!hasUnsavedChanges) return true;
     
     setSaving(true);
     setError(null);
@@ -179,11 +195,45 @@ export default function Prenomination2Page() {
       
       // Update saved state to match local state
       setSavedSelections(new Set(localSelections));
-      
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nepodařilo se uložit změny');
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFinalizeSubmission = async () => {
+    if (finalSubmitted) return;
+
+    setFinalizing(true);
+    setError(null);
+
+    if (hasUnsavedChanges) {
+      const saved = await handleSave();
+      if (!saved) {
+        setFinalizing(false);
+        return;
+      }
+    }
+
+    try {
+      const response = await fetch('/api/prenom2/finalize', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || 'Nepodařilo se odeslat finální tipy');
+      }
+
+      setFinalSubmitted(true);
+      modalRef.current?.close();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nepodařilo se odeslat finální tipy');
+    } finally {
+      setFinalizing(false);
     }
   };
 
@@ -240,8 +290,17 @@ export default function Prenomination2Page() {
         </div>
       )}
 
+      {finalSubmitted && !loading && !error && (
+        <div className="alert alert-success mb-6">
+          <span>Finální odevzdání je hotové. Tipy už nelze měnit.</span>
+          <Link href="/results/prenom2" className="btn btn-sm btn-success">
+            Zobrazit výsledky
+          </Link>
+        </div>
+      )}
+
       {/* Unsaved changes indicator */}
-      {!loading && !error && hasUnsavedChanges && (
+      {!loading && !error && hasUnsavedChanges && !finalSubmitted && (
         <div className="alert border-2 border-warning bg-transparent mb-6">
           <Save className="w-5 h-5 text-warning" />
           <span>Máte {unsavedCount} neuložených změn</span>
@@ -318,7 +377,7 @@ export default function Prenomination2Page() {
                             id={movie.id}
                             name={movie.name}
                             selected={isSelected}
-                            disabled={isDisabled}
+                            disabled={finalSubmitted || isDisabled}
                             hasUnsavedChanges={isUnsaved}
                             onToggle={(movieId, selected) =>
                               handleToggleSelection(category.id, movieId, selected)
@@ -338,7 +397,7 @@ export default function Prenomination2Page() {
       {/* Final submission button */}
       {!loading && !error && (
         <div className="mt-8 flex justify-end gap-4">
-          {hasUnsavedChanges && (
+          {!finalSubmitted && hasUnsavedChanges && (
             <button
               onClick={handleSave}
               disabled={saving}
@@ -357,13 +416,19 @@ export default function Prenomination2Page() {
               )}
             </button>
           )}
-          <button
-            onClick={() => modalRef.current?.showModal()}
-            className="btn btn-primary gap-2"
-          >
-            <Send className="w-5 h-5" />
-            Finální odevzdání
-          </button>
+          {finalSubmitted ? (
+            <Link href="/results/prenom2" className="btn btn-secondary">
+              Výsledky
+            </Link>
+          ) : (
+            <button
+              onClick={() => modalRef.current?.showModal()}
+              className="btn btn-primary gap-2"
+            >
+              <Send className="w-5 h-5" />
+              Finální odevzdání
+            </button>
+          )}
         </div>
       )}
 
@@ -371,18 +436,28 @@ export default function Prenomination2Page() {
       <dialog ref={modalRef} className="modal">
         <div className="modal-box">
           <h3 className="font-bold text-lg flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
             Finální odevzdání
           </h3>
           <p className="py-4">
-            Finální odevzdání prenominačního kola 2.0 bude možné nejdříve <strong>3. ledna 2025</strong>.
-          </p>
-          <p className="text-sm text-base-content/70">
-            Do té doby můžete své výběry kdykoliv upravovat.
+            Po finálním odevzdání už nebude možné tipy upravovat.
           </p>
           <div className="modal-action">
+            <button
+              className="btn btn-primary"
+              onClick={handleFinalizeSubmission}
+              disabled={finalizing}
+            >
+              {finalizing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Odesílám...
+                </>
+              ) : (
+                'Potvrdit odevzdání'
+              )}
+            </button>
             <form method="dialog">
-              <button className="btn">Rozumím</button>
+              <button className="btn">Zrušit</button>
             </form>
           </div>
         </div>

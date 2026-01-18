@@ -21,6 +21,7 @@ interface MovieProps {
   name: string;
   rating: Rating | null;
   ranking: number | null;
+  disabled?: boolean;
   hasUnsavedChanges?: boolean;
   onRatingChange: (movieId: number, rating: Rating | null, ranking: number | null) => void;
 }
@@ -30,11 +31,13 @@ export default function Movie({
   name, 
   rating, 
   ranking, 
+  disabled = false,
   hasUnsavedChanges,
   onRatingChange 
 }: MovieProps) {
 
   const handleRatingClick = (newRating: Rating) => {
+    if (disabled) return;
     // If clicking on the same rating, unselect it
     if (rating === newRating) {
       onRatingChange(id, null, null);
@@ -45,6 +48,7 @@ export default function Movie({
   };
 
   const handleRankingChange = (newRank: number) => {
+    if (disabled) return;
     if (rating === Rating.YES) {
       onRatingChange(id, Rating.YES, newRank);
     }
@@ -53,7 +57,7 @@ export default function Movie({
   return (
     <div className={`border p-4 rounded-lg relative transition-all ${
       hasUnsavedChanges ? 'border-warning bg-warning/5' : ''
-    }`}>
+    } ${disabled ? 'opacity-60 cursor-not-allowed' : ''}`}>
       {hasUnsavedChanges && (
         <div className="absolute top-2 right-2">
           <span className="badge badge-warning badge-xs">neuloženo</span>
@@ -63,7 +67,9 @@ export default function Movie({
       <div className="flex gap-4 items-center">
         <div 
           onClick={() => handleRatingClick(Rating.YES)}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          className={`flex items-center gap-2 transition-opacity ${
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:opacity-80'
+          }`}
         >
           <input
             type="radio"
@@ -76,7 +82,9 @@ export default function Movie({
         </div>
         <div 
           onClick={() => handleRatingClick(Rating.MAYBE)}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          className={`flex items-center gap-2 transition-opacity ${
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:opacity-80'
+          }`}
         >
           <input
             type="radio"
@@ -89,7 +97,9 @@ export default function Movie({
         </div>
         <div 
           onClick={() => handleRatingClick(Rating.NO)}
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+          className={`flex items-center gap-2 transition-opacity ${
+            disabled ? 'cursor-not-allowed' : 'cursor-pointer hover:opacity-80'
+          }`}
         >
           <input
             type="radio"
@@ -112,10 +122,13 @@ export default function Movie({
                 key={num}
                 type="button"
                 onClick={() => handleRankingChange(num)}
+                disabled={disabled}
                 className={`w-10 h-10 rounded-lg font-semibold transition-all ${
                   ranking === num
                     ? 'bg-green-500 text-white scale-110'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    : disabled
+                      ? 'bg-gray-200 text-gray-500'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                 }`}
               >
                 {num}

@@ -42,6 +42,7 @@ export default function OrderingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [finalSubmitted, setFinalSubmitted] = useState(false);
   const hasSavedInitial = useRef(false);
 
   const sensors = useSensors(
@@ -52,6 +53,7 @@ export default function OrderingPage() {
   );
 
   const saveRankings = useCallback(async (orderedMovies: OrderedMovie[]) => {
+    if (finalSubmitted) return;
     setIsSaving(true);
     try {
       // Save each movie's ranking
@@ -73,7 +75,7 @@ export default function OrderingPage() {
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [finalSubmitted]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -90,6 +92,16 @@ export default function OrderingPage() {
         }
 
         const data: MovieWithRanking[] = await res.json();
+
+        try {
+          const statusRes = await fetch('/api/user/final-submissions');
+          if (statusRes.ok) {
+            const statusData = await statusRes.json();
+            setFinalSubmitted(Boolean(statusData.prenom1FinalSubmitted));
+          }
+        } catch {
+          console.log('Nepodařilo se načíst stav finálního odevzdání');
+        }
         
         // Filter only YES rated movies and sort by ranking
         const yesMovies = data
@@ -139,6 +151,7 @@ export default function OrderingPage() {
   }, [saveRankings]);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (finalSubmitted) return;
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -180,6 +193,12 @@ export default function OrderingPage() {
           <span className="loading loading-spinner loading-sm text-primary"></span>
         )}
       </div>
+
+      {finalSubmitted && (
+        <div className="alert alert-success mb-6">
+          <span>Finální odevzdání je hotové. Pořadí je jen pro čtení.</span>
+        </div>
+      )}
 
       {loading && (
         <div className="flex justify-center py-12">
@@ -235,6 +254,7 @@ export default function OrderingPage() {
                       name={movie.name}
                       rank={movie.ranking}
                       isOverflow={isOverflow}
+                      disabled={finalSubmitted}
                     />
                   </div>
                 );

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, Lock } from 'lucide-react';
 
 interface CategorySelection {
   categoryId: number;
@@ -13,6 +13,7 @@ interface UserData {
   id: string;
   name: string;
   email: string;
+  finalSubmitted?: boolean;
   completeCategories: number;
   totalCategories: number;
   categorySelections: CategorySelection[];
@@ -20,9 +21,12 @@ interface UserData {
 
 interface Props {
   users: UserData[];
+  title?: string;
+  showAllMovies?: boolean; // For results page - always show movies
+  viewerFinalized?: boolean; // Whether the viewing user has finalized
 }
 
-export function Prenom2GuessesClient({ users }: Props) {
+export function Prenom2GuessesClient({ users, title, showAllMovies = false, viewerFinalized = false }: Props) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(
     users[0]?.id ?? null
   );
@@ -53,7 +57,7 @@ export function Prenom2GuessesClient({ users }: Props) {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">
-        Prenominační kolo 2.0 - tipy účastníků
+        {title ?? 'Prenominační kolo 2.0 - tipy účastníků'}
       </h1>
 
       <div className="flex gap-6">
@@ -69,7 +73,12 @@ export function Prenom2GuessesClient({ users }: Props) {
                       selectedUserId === user.id ? 'active' : ''
                     }`}
                   >
-                    <span className="font-medium">{user.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{user.name}</span>
+                      {user.finalSubmitted && (
+                        <Check className="w-4 h-4 text-green-500" />
+                      )}
+                    </div>
                     <span className="text-xs text-base-content/60">
                       {user.completeCategories > 0 ? (
                         <span className="flex items-center gap-1">
@@ -91,12 +100,26 @@ export function Prenom2GuessesClient({ users }: Props) {
         <div className="flex-1">
           {selectedUser ? (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold mb-4">{selectedUser.name}</h2>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-lg font-semibold">{selectedUser.name}</h2>
+                {selectedUser.finalSubmitted ? (
+                  <span className="badge badge-success badge-sm gap-1">
+                    <Check className="w-3 h-3" />
+                    Odevzdáno
+                  </span>
+                ) : (
+                  <span className="badge badge-warning badge-sm gap-1">
+                    <Lock className="w-3 h-3" />
+                    Neodevzdáno
+                  </span>
+                )}
+              </div>
 
               {selectedUser.categorySelections.map((cat) => {
                 const isExpanded = expandedCategories.has(cat.categoryId);
                 const isComplete = cat.movies.length === 5;
                 const hasSelections = cat.movies.length > 0;
+                const canShowMovies = showAllMovies || viewerFinalized || selectedUser.finalSubmitted;
 
                 return (
                   <div
@@ -144,8 +167,9 @@ export function Prenom2GuessesClient({ users }: Props) {
                                 <span className="w-5 h-5 flex items-center justify-center bg-amber-500 text-gray-900 font-bold rounded-full text-xs">
                                   {idx + 1}
                                 </span>
-                                ZATÍM TAJNÉ
-                                {/* {movie} */}
+                                <span className={!canShowMovies ? 'text-base-content/50 italic' : ''}>
+                                  {canShowMovies ? movie : 'ZATÍM TAJNÉ'}
+                                </span>
                               </li>
                             ))}
                           </ul>

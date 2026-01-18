@@ -9,9 +9,10 @@ interface SortableMovieCardProps {
   name: string;
   rank: number;
   isOverflow?: boolean;
+  disabled?: boolean;
 }
 
-export function SortableMovieCard({ id, name, rank, isOverflow = false }: SortableMovieCardProps) {
+export function SortableMovieCard({ id, name, rank, isOverflow = false, disabled = false }: SortableMovieCardProps) {
   const {
     attributes,
     listeners,
@@ -19,7 +20,7 @@ export function SortableMovieCard({ id, name, rank, isOverflow = false }: Sortab
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -48,7 +49,10 @@ export function SortableMovieCard({ id, name, rank, isOverflow = false }: Sortab
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing p-2 hover:bg-base-200 rounded-lg transition-colors"
+        disabled={disabled}
+        className={`p-2 rounded-lg transition-colors ${
+          disabled ? 'cursor-not-allowed opacity-40' : 'cursor-grab active:cursor-grabbing hover:bg-base-200'
+        }`}
         aria-label="Drag to reorder"
       >
         <GripVertical className="w-5 h-5 text-base-content/50" />

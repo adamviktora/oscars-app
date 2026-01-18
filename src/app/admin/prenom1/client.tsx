@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { Check, Lock } from 'lucide-react';
 
 interface UserData {
   id: string;
   name: string;
   email: string;
+  finalSubmitted?: boolean;
   rankings: {
     ranking: number;
     movieName: string;
@@ -14,9 +16,12 @@ interface UserData {
 
 interface Props {
   users: UserData[];
+  title?: string;
+  showAllMovies?: boolean; // For results page - always show movies
+  viewerFinalized?: boolean; // Whether the viewing user has finalized
 }
 
-export function Prenom1GuessesClient({ users }: Props) {
+export function Prenom1GuessesClient({ users, title, showAllMovies = false, viewerFinalized = false }: Props) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(
     users[0]?.id ?? null
   );
@@ -26,7 +31,7 @@ export function Prenom1GuessesClient({ users }: Props) {
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">
-        Prenominační kolo - tipy účastníků
+        {title ?? 'Prenominační kolo - tipy účastníků'}
       </h1>
 
       <div className="flex gap-6">
@@ -42,7 +47,12 @@ export function Prenom1GuessesClient({ users }: Props) {
                       selectedUserId === user.id ? 'active' : ''
                     }`}
                   >
-                    <span className="font-medium">{user.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{user.name}</span>
+                      {user.finalSubmitted && (
+                        <Check className="w-4 h-4 text-green-500" />
+                      )}
+                    </div>
                     <span className="text-xs text-base-content/60">
                       {user.rankings.length > 0
                         ? `${user.rankings.length} tipů`
@@ -59,26 +69,41 @@ export function Prenom1GuessesClient({ users }: Props) {
         <div className="flex-1">
           {selectedUser ? (
             <div className="bg-base-100 rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">
-                {selectedUser.name}
-              </h2>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-lg font-semibold">
+                  {selectedUser.name}
+                </h2>
+                {selectedUser.finalSubmitted ? (
+                  <span className="badge badge-success badge-sm gap-1">
+                    <Check className="w-3 h-3" />
+                    Odevzdáno
+                  </span>
+                ) : (
+                  <span className="badge badge-warning badge-sm gap-1">
+                    <Lock className="w-3 h-3" />
+                    Neodevzdáno
+                  </span>
+                )}
+              </div>
 
               {selectedUser.rankings.length > 0 ? (
                 <ol className="space-y-2">
-                  {selectedUser.rankings.map((item) => (
-                    <li
-                      key={item.ranking}
-                      className="flex items-center gap-3 p-3 bg-base-200 rounded-lg"
-                    >
-                      <span className="w-8 h-8 flex items-center justify-center bg-amber-500 text-gray-900 font-bold rounded-full">
-                        {item.ranking}
-                      </span>
-                      <span>
-                        ZATÍM TAJNÉ
-                        {/* {item.movieName} */}
-                      </span>
-                    </li>
-                  ))}
+                  {selectedUser.rankings.map((item) => {
+                    const canShowMovie = showAllMovies || viewerFinalized || selectedUser.finalSubmitted;
+                    return (
+                      <li
+                        key={item.ranking}
+                        className="flex items-center gap-3 p-3 bg-base-200 rounded-lg"
+                      >
+                        <span className="w-8 h-8 flex items-center justify-center bg-amber-500 text-gray-900 font-bold rounded-full">
+                          {item.ranking}
+                        </span>
+                        <span className={!canShowMovie ? 'text-base-content/50 italic' : ''}>
+                          {canShowMovie ? item.movieName : 'ZATÍM TAJNÉ'}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ol>
               ) : (
                 <p className="text-base-content/60 italic">Žádné tipy</p>
