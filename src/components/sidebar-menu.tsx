@@ -246,8 +246,20 @@ export function SidebarMenu() {
                   className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
                 >
                   <span className="text-amber-500">🎬</span>
-                  Prenominační kolo
+                  Prenominační kolo - tipy účastníků
                 </Link>
+                <ul className="ml-4 mt-1 space-y-1">
+                  <li>
+                    <Link
+                      href="/admin/prenom1-preferences"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                    >
+                      <span>📊</span>
+                      Celková preference filmů
+                    </Link>
+                  </li>
+                </ul>
               </li>
               <li>
                 <Link

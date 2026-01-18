@@ -31,34 +31,38 @@ export default async function AdminLayout({
           <div className="flex items-center gap-4">
             <span className="text-xl">⚙️</span>
             <h2 className="font-semibold text-lg">Admin mód</h2>
-            <nav className="flex gap-2 ml-4 flex-wrap">
-              <Link 
-                href="/admin/users" 
-                className="btn btn-ghost btn-sm"
-              >
+            <nav className="flex items-center gap-2 ml-4 flex-wrap">
+              <Link href="/admin/users" className="btn btn-ghost btn-sm">
                 Uživatelé
               </Link>
-              <Link 
-                href="/admin/prenom1" 
-                className="btn btn-ghost btn-sm"
-              >
-                Prenominační kolo
-              </Link>
-              <Link 
-                href="/admin/prenom2" 
-                className="btn btn-ghost btn-sm"
-              >
-                Prenominační kolo 2.0
-              </Link>
+
+              <div className="divider divider-horizontal mx-1" />
+
+              {/* Prenom 1 group */}
+              <div className="flex items-center gap-1 bg-base-200 rounded-lg px-2 py-1">
+                <span className="text-xs text-base-content/50 mr-1">Prenominační:</span>
+                <Link href="/admin/prenom1" className="btn btn-ghost btn-xs">
+                  Tipy účastníků
+                </Link>
+                <Link href="/admin/prenom1-preferences" className="btn btn-ghost btn-xs">
+                  Preference filmů
+                </Link>
+              </div>
+
+              {/* Prenom 2 group */}
+              <div className="flex items-center gap-1 bg-base-200 rounded-lg px-2 py-1">
+                <span className="text-xs text-base-content/50 mr-1">Prenominační 2.0:</span>
+                <Link href="/admin/prenom2" className="btn btn-ghost btn-xs">
+                  Tipy účastníků
+                </Link>
+              </div>
             </nav>
           </div>
         </div>
       </div>
-      
+
       {/* Admin Content */}
-      <div className="container mx-auto px-4 py-6">
-        {children}
-      </div>
+      <div className="container mx-auto px-4 py-6">{children}</div>
     </div>
   );
 }
