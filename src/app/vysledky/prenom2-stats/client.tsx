@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Users, AlertTriangle, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertTriangle, Sparkles } from 'lucide-react';
 
 interface MovieGuess {
   movieName: string;
@@ -56,9 +56,6 @@ export function Prenom2StatsClient({ categories }: Props) {
           const isExpanded = expandedCategories.has(category.categoryId);
           const topMovie = category.movieGuesses[0];
           const hasPerfectMatches = category.perfectMatches.length > 0;
-          const hasLonelyMovies = category.movieGuesses.some(
-            (m) => m.count === 1
-          );
 
           return (
             <div
@@ -81,12 +78,6 @@ export function Prenom2StatsClient({ categories }: Props) {
                     <span className="badge badge-success gap-1">
                       <Sparkles className="w-3 h-3" />
                       5/5 shoda
-                    </span>
-                  )}
-                  {hasLonelyMovies && (
-                    <span className="badge badge-warning gap-1">
-                      <Users className="w-3 h-3" />
-                      Osamocené tipy
                     </span>
                   )}
                 </div>
@@ -119,7 +110,9 @@ export function Prenom2StatsClient({ categories }: Props) {
                         </thead>
                         <tbody>
                           {category.movieGuesses.map((movie, idx) => {
-                            const isTop = idx === 0;
+                            const isTop =
+                              idx === 0 ||
+                              movie.count === category.movieGuesses[0].count;
                             const isLonely = movie.count === 1;
 
                             return (
@@ -129,7 +122,7 @@ export function Prenom2StatsClient({ categories }: Props) {
                                   isTop
                                     ? 'bg-amber-500/10'
                                     : isLonely
-                                    ? 'bg-warning/10'
+                                    ? 'bg-red-700/15'
                                     : ''
                                 }
                               >
@@ -149,15 +142,9 @@ export function Prenom2StatsClient({ categories }: Props) {
                                   {movie.count}-krát
                                 </td>
                                 <td>
-                                  {isLonely ? (
-                                    <span className="text-warning font-medium">
-                                      {movie.users[0]}
-                                    </span>
-                                  ) : (
-                                    <span className="text-base-content/60 text-sm">
-                                      {movie.users.join(', ')}
-                                    </span>
-                                  )}
+                                  <span className="text-base-content/60 text-sm">
+                                    {movie.users.join(', ')}
+                                  </span>
                                 </td>
                               </tr>
                             );
