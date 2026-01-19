@@ -21,7 +21,7 @@ interface CategoryStats {
   perfectMatches: UserMatch[]; // Groups of users with identical 5/5 selections
 }
 
-export default async function AdminPrenom2StatsPage() {
+export default async function Prenom2StatsPage() {
   // Fetch all categories
   const categories = await prisma.prenom2Category.findMany({
     orderBy: { order: 'asc' },

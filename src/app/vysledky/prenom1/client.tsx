@@ -17,8 +17,8 @@ interface UserData {
 interface Props {
   users: UserData[];
   title?: string;
-  showAllMovies?: boolean; // For results page - always show movies
-  viewerFinalized?: boolean; // Whether the viewing user has finalized
+  showAllMovies?: boolean;
+  viewerFinalized?: boolean;
 }
 
 export function Prenom1GuessesClient({ users, title, showAllMovies = false, viewerFinalized = false }: Props) {

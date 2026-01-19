@@ -10,7 +10,7 @@ interface MovieStats {
   position: number; // Display position (can be same for ties)
 }
 
-export default async function AdminPrenom1PreferencesPage() {
+export default async function Prenom1PreferencesPage() {
   // Get all movies that are in prenom1 (have prenom1Order)
   const movies = await prisma.movie.findMany({
     where: {
@@ -85,20 +85,17 @@ export default async function AdminPrenom1PreferencesPage() {
         points: stats.points,
         frequency: stats.frequency,
         bestPosition: stats.bestPosition,
-        position: 0, // Will be assigned after sorting
+        position: 0,
       };
     })
     .filter((movie) => movie.points > 0)
     .sort((a, b) => {
-      // Sort by points descending
       if (b.points !== a.points) {
         return b.points - a.points;
       }
-      // Then by frequency descending
       if (b.frequency !== a.frequency) {
         return b.frequency - a.frequency;
       }
-      // Then by best position ascending (lower = better)
       return a.bestPosition - b.bestPosition;
     });
 
@@ -108,7 +105,6 @@ export default async function AdminPrenom1PreferencesPage() {
       let position = 1;
       if (index > 0) {
         const prev = acc[index - 1];
-        // If stats are same as previous, use same position
         if (
           movie.points === prev.points &&
           movie.frequency === prev.frequency &&

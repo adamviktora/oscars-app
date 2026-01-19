@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ORDERING_PAGE_LABEL, isAdmin } from '@/lib/constants';
 import { useSession } from '@/lib/auth-client';
 
@@ -9,33 +9,6 @@ export function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
   const userIsAdmin = isAdmin(session?.user?.email);
-  const [finalStatus, setFinalStatus] = useState<{
-    prenom1FinalSubmitted: boolean;
-    prenom2FinalSubmitted: boolean;
-  } | null>(null);
-
-  useEffect(() => {
-    const loadFinalStatus = async () => {
-      if (!session?.user?.id) {
-        setFinalStatus(null);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/user/final-submissions');
-        if (!response.ok) return;
-        const data = await response.json();
-        setFinalStatus({
-          prenom1FinalSubmitted: Boolean(data.prenom1FinalSubmitted),
-          prenom2FinalSubmitted: Boolean(data.prenom2FinalSubmitted),
-        });
-      } catch {
-        setFinalStatus(null);
-      }
-    };
-
-    loadFinalStatus();
-  }, [session?.user?.id]);
 
   const menuItems = [
     {
@@ -65,23 +38,6 @@ export function SidebarMenu() {
       icon: '🏆',
     },
   ];
-
-  const resultsItems = [
-    finalStatus?.prenom1FinalSubmitted
-      ? {
-          label: 'Výsledky - prenominační kolo',
-          href: '/results/prenom1',
-          icon: '📊',
-        }
-      : null,
-    finalStatus?.prenom2FinalSubmitted
-      ? {
-          label: 'Výsledky - prenominační kolo 2.0',
-          href: '/results/prenom2',
-          icon: '📊',
-        }
-      : null,
-  ].filter(Boolean) as { label: string; href: string; icon: string }[];
 
   return (
     <>
@@ -200,29 +156,58 @@ export function SidebarMenu() {
           ))}
         </ul>
 
-        {!userIsAdmin && resultsItems.length > 0 && (
-          <>
-            <div className="divider px-4 text-xs text-base-content/50">
-              Výsledky
-            </div>
-            <ul className="menu px-4 gap-1">
-              {resultsItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-                  >
-                    <span className="text-amber-500">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
+        {/* Výsledky Section - visible to everyone */}
+        <div className="divider px-4 text-xs text-base-content/50">
+          Výsledky
+        </div>
+        <ul className="menu px-4 gap-1">
+          <li>
+            <Link
+              href="/vysledky/prenom1"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
+            >
+              <span className="text-amber-500">🎬</span>
+              Prenominační kolo - tipy účastníků
+            </Link>
+            <ul className="ml-4 mt-1 space-y-1">
+              <li>
+                <Link
+                  href="/vysledky/prenom1-preferences"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span>📊</span>
+                  Celková preference filmů
+                </Link>
+              </li>
             </ul>
-          </>
-        )}
+          </li>
+          <li>
+            <Link
+              href="/vysledky/prenom2"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
+            >
+              <span className="text-amber-500">🎬</span>
+              Prenominační kolo 2.0 - tipy účastníků
+            </Link>
+            <ul className="ml-4 mt-1 space-y-1">
+              <li>
+                <Link
+                  href="/vysledky/prenom2-stats"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span>📊</span>
+                  Statistiky kategorií
+                </Link>
+              </li>
+            </ul>
+          </li>
+        </ul>
 
-        {/* Admin Section */}
+        {/* Admin Section - only for admins */}
         {userIsAdmin && (
           <>
             <div className="divider px-4 text-xs text-base-content/50">
@@ -238,50 +223,6 @@ export function SidebarMenu() {
                   <span className="text-amber-500">👥</span>
                   Uživatelé
                 </Link>
-              </li>
-              <li>
-                <Link
-                  href="/admin/prenom1"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-                >
-                  <span className="text-amber-500">🎬</span>
-                  Prenominační kolo - tipy účastníků
-                </Link>
-                <ul className="ml-4 mt-1 space-y-1">
-                  <li>
-                    <Link
-                      href="/admin/prenom1-preferences"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
-                    >
-                      <span>📊</span>
-                      Celková preference filmů
-                    </Link>
-                  </li>
-                </ul>
-              </li>
-              <li>
-                <Link
-                  href="/admin/prenom2"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-                >
-                  <span className="text-amber-500">🎬</span>
-                  Prenominační kolo 2.0 - tipy účastníků
-                </Link>
-                <ul className="ml-4 mt-1 space-y-1">
-                  <li>
-                    <Link
-                      href="/admin/prenom2-stats"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
-                    >
-                      <span>📊</span>
-                      Statistiky kategorií
-                    </Link>
-                  </li>
-                </ul>
               </li>
             </ul>
           </>

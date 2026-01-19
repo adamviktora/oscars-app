@@ -1,28 +1,20 @@
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { isAdmin } from '@/lib/constants';
-import { Prenom2GuessesClient } from '@/app/admin/prenom2/client';
+import { Prenom2GuessesClient } from './client';
 
 export default async function Prenom2ResultsPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (!session) {
-    redirect('/signin');
-  }
-
-  const user = await prisma.user.findUnique({
+  // Get current user's final submission status
+  const currentUser = session ? await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { prenom2FinalSubmitted: true },
-  });
+  }) : null;
 
-  if (!isAdmin(session.user.email) && !user?.prenom2FinalSubmitted) {
-    redirect('/prenomination2');
-  }
-
+  // Fetch all categories
   const categories = await prisma.prenom2Category.findMany({
     orderBy: { order: 'asc' },
     select: {
@@ -31,6 +23,7 @@ export default async function Prenom2ResultsPage() {
     },
   });
 
+  // Fetch all users with their prenom2 selections
   const users = await prisma.user.findMany({
     where: {
       email: { not: 'robinzon@skaut.cz' },
@@ -55,25 +48,28 @@ export default async function Prenom2ResultsPage() {
     },
   });
 
-  const usersData = users.map((userData) => {
+  // Transform data for the client
+  const usersData = users.map((user) => {
+    // Group selections by category
     const selectionsByCategory = new Map<number, string[]>();
-
-    userData.prenom2Selections.forEach((sel) => {
+    
+    user.prenom2Selections.forEach((sel) => {
       const existing = selectionsByCategory.get(sel.categoryId) || [];
       existing.push(sel.movie.name);
       selectionsByCategory.set(sel.categoryId, existing);
     });
 
+    // Count complete categories (5 selections)
     let completeCategories = 0;
     selectionsByCategory.forEach((movies) => {
       if (movies.length === 5) completeCategories++;
     });
 
     return {
-      id: userData.id,
-      name: userData.name,
-      email: userData.email,
-      finalSubmitted: userData.prenom2FinalSubmitted,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      finalSubmitted: user.prenom2FinalSubmitted,
       completeCategories,
       totalCategories: categories.length,
       categorySelections: categories.map((cat) => ({
@@ -89,8 +85,7 @@ export default async function Prenom2ResultsPage() {
   return (
     <Prenom2GuessesClient
       users={usersData}
-      title="Výsledky - Prenominační kolo 2.0"
-      viewerFinalized
+      viewerFinalized={currentUser?.prenom2FinalSubmitted ?? false}
     />
   );
 }
