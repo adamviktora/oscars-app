@@ -35,14 +35,29 @@ export default async function Home() {
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-4">Vítej, {session.user.name}!</h2>
         <p className="text-base-content/70 mb-6">
-          Začni s tipováním letošních oscarových sázek!
+          Tipování v prenominačních kolech je u konce.
+          <br />
+          Podívej se na tipy ostatních účastníků a statistiky.
         </p>
+        <h3 className="text-lg font-bold mb-4 mt-6">Prenominační kolo</h3>
         <div className="flex flex-col gap-3 items-center">
-          <Link href="/prenomination" className="btn btn-primary">
-            Prenominační kolo
+          <Link href="/vysledky/prenom1" className="btn btn-primary">
+            Tipy účastníků
           </Link>
-          <Link href="/prenomination2" className="btn btn-primary">
-            Prenominační kolo 2.0
+          <Link
+            href="/vysledky/prenom1-preferences"
+            className="btn btn-primary"
+          >
+            Celková preference filmů
+          </Link>
+        </div>
+        <h3 className="text-lg font-bold mb-4 mt-6">Prenominační kolo 2.0</h3>
+        <div className="flex flex-col gap-3 items-center">
+          <Link href="/vysledky/prenom2" className="btn btn-secondary">
+            Tipy účastníků
+          </Link>
+          <Link href="/vysledky/prenom2-stats" className="btn btn-secondary">
+            Statistiky kategorií
           </Link>
         </div>
       </div>

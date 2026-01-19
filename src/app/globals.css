@@ -1,3 +1,8 @@
 @import 'tailwindcss';
 @plugin "daisyui";
 
+/* Custom secondary color - muted slate blue instead of bright pink */
+:root {
+  --color-secondary: oklch(55% 0.12 250);
+  --color-secondary-content: oklch(98% 0 0);
+}
