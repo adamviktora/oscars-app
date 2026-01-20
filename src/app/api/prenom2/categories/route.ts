@@ -73,7 +73,11 @@ function czechCompare(a: string, b: string): number {
 export async function GET() {
   try {
     // Cache categories for 5 minutes using Prisma Accelerate
+    // Exclude best-picture which is not part of prenom2
     const categories = await prisma.prenom2Category.findMany({
+      where: {
+        slug: { not: 'best-picture' },
+      },
       orderBy: { order: 'asc' },
       include: {
         movies: {

@@ -22,8 +22,11 @@ interface CategoryStats {
 }
 
 export default async function Prenom2StatsPage() {
-  // Fetch all categories
+  // Fetch all categories (excluding best-picture which is not part of prenom2)
   const categories = await prisma.prenom2Category.findMany({
+    where: {
+      slug: { not: 'best-picture' },
+    },
     orderBy: { order: 'asc' },
     select: {
       id: true,

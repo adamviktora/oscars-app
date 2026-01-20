@@ -35,6 +35,9 @@ export default async function AdminLayout({
               <Link href="/admin/users" className="btn btn-ghost btn-sm">
                 Uživatelé
               </Link>
+              <Link href="/admin/nominations" className="btn btn-ghost btn-sm">
+                Nominace
+              </Link>
             </nav>
           </div>
         </div>

@@ -224,6 +224,16 @@ export function SidebarMenu() {
                   Uživatelé
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/admin/nominations"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
+                >
+                  <span className="text-amber-500">🏆</span>
+                  Nominace
+                </Link>
+              </li>
             </ul>
           </>
         )}
