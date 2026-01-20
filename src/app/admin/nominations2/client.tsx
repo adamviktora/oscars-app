@@ -162,7 +162,8 @@ export function Nominations2Client({ categories }: Props) {
         return next;
       });
 
-      setSuccessMessage('Kategorie byla uložena');
+      const categoryName = categories.find(c => c.id === categoryId)?.name || '';
+      setSuccessMessage(`Kategorie ${categoryName} byla uložena`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nepodařilo se uložit');
     } finally {

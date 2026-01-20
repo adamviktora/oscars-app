@@ -112,7 +112,7 @@ export default async function Prenom1PreferencesPage() {
         ) {
           position = prev.position;
         } else {
-          position = index + 1;
+          position = prev.position + 1;
         }
       }
       acc.push({ ...movie, position });

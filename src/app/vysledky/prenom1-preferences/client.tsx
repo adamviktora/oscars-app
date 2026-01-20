@@ -19,7 +19,7 @@ export function Prenom1PreferencesClient({ movies, maxFrequency }: Props) {
     <div>
       <h1 className="text-2xl font-bold mb-2">Celková preference filmů</h1>
       <p className="text-base-content/60 mb-6">
-        Prenominační kolo • Odevzdaných účastníků: {maxFrequency}
+        Prenominační kolo • Tipovalo celkem {maxFrequency} účastníků
       </p>
 
       <div className="bg-base-100 rounded-lg shadow overflow-hidden">
