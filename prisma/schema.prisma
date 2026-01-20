@@ -83,6 +83,7 @@ model Movie {
   userSelectionsPrenom  UserMovieSelectionPrenom[]
   prenom2Categories     Prenom2CategoryMovie[]
   prenom2Selections     UserPrenom2Selection[]
+  nominations           Nomination[]
 
   @@map("movie")
 }
@@ -108,15 +109,16 @@ model UserMovieSelectionPrenom {
 // ============================================
 
 model Prenom2Category {
-  id         Int                      @id @default(autoincrement())
-  name       String                   @unique  // e.g. "Hudba", "Píseň", etc.
-  slug       String                   @unique  // e.g. "music", "song", etc.
-  order      Int                      @default(0)
-  createdAt  DateTime                 @default(now())
-  updatedAt  DateTime                 @updatedAt
+  id          Int                      @id @default(autoincrement())
+  name        String                   @unique  // e.g. "Hudba", "Píseň", etc.
+  slug        String                   @unique  // e.g. "music", "song", etc.
+  order       Int                      @default(0)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
   
-  movies     Prenom2CategoryMovie[]
-  selections UserPrenom2Selection[]
+  movies      Prenom2CategoryMovie[]
+  selections  UserPrenom2Selection[]
+  nominations Nomination[]
   
   @@map("prenom2_category")
 }
@@ -150,4 +152,22 @@ model UserPrenom2Selection {
   
   @@unique([userId, categoryId, movieId])
   @@map("user_prenom2_selection")
+}
+
+// ============================================
+// OFFICIAL NOMINATIONS
+// ============================================
+
+// Official Oscar nominations - which movies were actually nominated in which categories
+model Nomination {
+  id         Int              @id @default(autoincrement())
+  categoryId Int
+  movieId    Int
+  createdAt  DateTime         @default(now())
+  
+  category   Prenom2Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  movie      Movie            @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  
+  @@unique([categoryId, movieId])
+  @@map("nomination")
 }
