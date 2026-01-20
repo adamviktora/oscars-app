@@ -224,15 +224,32 @@ export function SidebarMenu() {
                   Uživatelé
                 </Link>
               </li>
+              <li className="menu-title flex flex-row gap-3 py-2 pl-4 text-base-content/70">
+                🏆 <span>Zadat nominace</span>
+              </li>
               <li>
-                <Link
-                  href="/admin/nominations"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-                >
-                  <span className="text-amber-500">🏆</span>
-                  Nominace
-                </Link>
+                <ul className="ml-4 space-y-1">
+                  <li>
+                    <Link
+                      href="/admin/nominations"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                    >
+                      <span>🎬</span>
+                      Nejlepší film
+                    </Link>
+                  </li>
+                  <li>
+                    <Link
+                      href="/admin/nominations2"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                    >
+                      <span>📋</span>
+                      Prenominační kolo 2.0
+                    </Link>
+                  </li>
+                </ul>
               </li>
             </ul>
           </>

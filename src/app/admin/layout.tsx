@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { isAdmin } from '@/lib/constants';
 import Link from 'next/link';
+import { AdminDropdown } from '@/components/admin-dropdown';
 
 export default async function AdminLayout({
   children,
@@ -35,9 +36,13 @@ export default async function AdminLayout({
               <Link href="/admin/users" className="btn btn-ghost btn-sm">
                 Uživatelé
               </Link>
-              <Link href="/admin/nominations" className="btn btn-ghost btn-sm">
-                Nominace
-              </Link>
+              <AdminDropdown
+                label="Zadat nominace"
+                items={[
+                  { href: '/admin/nominations', label: 'Nejlepší film', icon: '🎬' },
+                  { href: '/admin/nominations2', label: 'Prenominační kolo 2.0', icon: '📋' },
+                ]}
+              />
             </nav>
           </div>
         </div>

@@ -79,7 +79,7 @@ export function NominationsClient({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Nominace - Nejlepší film</h1>
           <p className="text-base-content/60 mt-1">
@@ -87,8 +87,18 @@ export function NominationsClient({
             (max. 10)
           </p>
         </div>
-        <div className="badge badge-lg badge-neutral">
-          {selectedIds.size} / 10 vybráno
+        <div className="flex items-center gap-3">
+          <div className="badge badge-lg badge-neutral">
+            {selectedIds.size} / 10 vybráno
+          </div>
+          <button
+            onClick={() => modalRef.current?.showModal()}
+            disabled={saving || selectedIds.size < 7}
+            className="btn btn-primary gap-2"
+          >
+            <Save className="w-5 h-5" />
+            Uložit nominace
+          </button>
         </div>
       </div>
 
@@ -134,17 +144,6 @@ export function NominationsClient({
             );
           })}
         </div>
-      </div>
-
-      <div className="mt-6 flex justify-end">
-        <button
-          onClick={() => modalRef.current?.showModal()}
-          disabled={saving || selectedIds.size < 7}
-          className="btn btn-primary gap-2"
-        >
-          <Save className="w-5 h-5" />
-          Uložit nominace
-        </button>
       </div>
 
       {/* Confirmation Modal */}
