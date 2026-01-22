@@ -35,6 +35,9 @@ export default async function VysledkyLayout({
                 <Link href="/vysledky/prenom1-preferences" className="btn btn-ghost btn-xs">
                   Preference filmů
                 </Link>
+                <Link href="/vysledky/prenom1-leaderboard" className="btn btn-ghost btn-xs">
+                  Žebříček
+                </Link>
               </div>
 
               {/* Prenom 2 group */}

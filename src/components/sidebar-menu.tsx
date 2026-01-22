@@ -102,7 +102,10 @@ export function SidebarMenu() {
           </button>
         </div>
 
-        {/* Menu Items */}
+        {/* Tipování */}
+        <div className="divider px-4 text-xs text-base-content/50 mt-6">
+          Tipování
+        </div>
         <ul className="menu p-4 gap-1">
           {menuItems.map((item) => (
             <li key={item.href}>
@@ -162,15 +165,30 @@ export function SidebarMenu() {
         </div>
         <ul className="menu px-4 gap-1">
           <li>
-            <Link
-              href="/vysledky/prenom1"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-            >
-              <span className="text-amber-500">🎬</span>
-              Prenominační kolo - tipy účastníků
-            </Link>
+            <li className="menu-title flex flex-row gap-3 py-2 pl-4 text-base-content/70">
+              🎬 <span>Prenominační kolo</span>
+            </li>
             <ul className="ml-4 mt-1 space-y-1">
+              <li>
+                <Link
+                  href="/vysledky/prenom1-leaderboard"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span>🏆</span>
+                  Žebříček
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/vysledky/prenom1"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span className="text-amber-500">🎬</span>
+                  Tipy účastníků
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/vysledky/prenom1-preferences"
@@ -184,15 +202,20 @@ export function SidebarMenu() {
             </ul>
           </li>
           <li>
-            <Link
-              href="/vysledky/prenom2"
-              onClick={() => setIsOpen(false)}
-              className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200"
-            >
-              <span className="text-amber-500">🎬</span>
-              Prenominační kolo 2.0 - tipy účastníků
-            </Link>
+            <li className="menu-title flex flex-row gap-3 py-2 pl-4 text-base-content/70">
+              🎬 <span>Prenominační kolo 2.0</span>
+            </li>
             <ul className="ml-4 mt-1 space-y-1">
+              <li>
+                <Link
+                  href="/vysledky/prenom2"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span className="text-amber-500">🎬</span>
+                  Tipy účastníků
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/vysledky/prenom2-stats"
