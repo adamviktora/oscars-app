@@ -208,6 +208,26 @@ export function SidebarMenu() {
             <ul className="ml-4 mt-1 space-y-1">
               <li>
                 <Link
+                  href="/vysledky/prenom2-leaderboard"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span>🏆</span>
+                  Žebříček
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/vysledky/prenom2-earnings"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                >
+                  <span>💰</span>
+                  Výsledné zisky
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/vysledky/prenom2"
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
