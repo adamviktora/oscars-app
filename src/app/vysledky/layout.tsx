@@ -49,6 +49,12 @@ export default async function VysledkyLayout({
                 <Link href="/vysledky/prenom2-stats" className="btn btn-ghost btn-xs">
                   Statistiky kategorií
                 </Link>
+                <Link href="/vysledky/prenom2-leaderboard" className="btn btn-ghost btn-xs">
+                  Žebříček
+                </Link>
+                <Link href="/vysledky/prenom2-earnings" className="btn btn-ghost btn-xs">
+                  Výsledné zisky
+                </Link>
               </div>
             </nav>
           </div>
