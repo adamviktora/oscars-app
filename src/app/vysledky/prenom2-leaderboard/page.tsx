@@ -40,6 +40,7 @@ export interface UserScore {
   name: string;
   totalPrize: number;
   position: number;
+  successfulCategories: number; // Categories where user got at least +1 Kč
   categoryResults: CategoryResult[];
 }
 
@@ -169,11 +170,17 @@ export default async function Prenom2LeaderboardPage() {
       }
     });
 
+    // Count categories where user earned at least 1 Kč
+    const successfulCategories = categoryResults.filter(
+      (cat) => cat.prize >= 1
+    ).length;
+
     return {
       id: user.id,
       name: user.name,
       totalPrize,
       position: 0,
+      successfulCategories,
       categoryResults,
     };
   });

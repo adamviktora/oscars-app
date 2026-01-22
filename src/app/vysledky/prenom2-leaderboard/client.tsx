@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Trophy, Medal, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface CategoryResult {
@@ -18,6 +18,7 @@ interface UserScore {
   name: string;
   totalPrize: number;
   position: number;
+  successfulCategories: number;
   categoryResults: CategoryResult[];
 }
 
@@ -74,13 +75,16 @@ export function Prenom2LeaderboardClient({ users }: Props) {
                 <tr>
                   <th className="w-16">Pořadí</th>
                   <th>Jméno</th>
+                  <th className="text-center hidden sm:table-cell">
+                    Úspěšné kategorie
+                  </th>
                   <th className="text-center">Celkový zisk</th>
                   <th className="w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <>
+                  <Fragment key={user.id}>
                     <tr
                       key={user.id}
                       className={`cursor-pointer hover:bg-base-200 ${
@@ -103,6 +107,15 @@ export function Prenom2LeaderboardClient({ users }: Props) {
                       </td>
                       <td>
                         <div className="font-medium">{user.name}</div>
+                        <div className="text-xs text-base-content/50 sm:hidden">
+                          {user.successfulCategories} úspěšných kategorií
+                        </div>
+                      </td>
+                      <td className="text-center hidden sm:table-cell">
+                        <span className="badge badge-neutral">
+                          {user.successfulCategories} /{' '}
+                          {user.categoryResults.length}
+                        </span>
                       </td>
                       <td className="text-center">
                         <span className="badge badge-lg badge-primary font-bold">
@@ -119,7 +132,7 @@ export function Prenom2LeaderboardClient({ users }: Props) {
                     </tr>
                     {expandedUser === user.id && (
                       <tr key={`${user.id}-detail`}>
-                        <td colSpan={4} className="bg-base-200/50 p-4">
+                        <td colSpan={5} className="bg-base-200/50 p-4">
                           <div className="text-sm font-medium mb-3">
                             Výsledky podle kategorií:
                           </div>
@@ -183,7 +196,7 @@ export function Prenom2LeaderboardClient({ users }: Props) {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

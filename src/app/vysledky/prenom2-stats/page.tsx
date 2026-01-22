@@ -1,6 +1,36 @@
 import prisma from '@/lib/prisma';
 import { Prenom2StatsClient } from './client';
 
+// Prize calculation based on correct guesses and shortlist size
+function calculatePrize(correctGuesses: number, shortlistSize: number): number {
+  if (correctGuesses === 5) {
+    if (shortlistSize <= 10) return 10;
+    if (shortlistSize <= 16) return 13;
+    return 17;
+  }
+  if (correctGuesses === 4) {
+    if (shortlistSize <= 10) return 5;
+    if (shortlistSize <= 16) return 6;
+    return 8;
+  }
+  if (correctGuesses === 3) {
+    if (shortlistSize <= 10) return 2;
+    if (shortlistSize <= 16) return 3;
+    return 4;
+  }
+  if (correctGuesses === 2) {
+    if (shortlistSize >= 20) return 1;
+  }
+  return 0;
+}
+
+// Max prize possible for a category
+function getMaxPrize(shortlistSize: number): number {
+  if (shortlistSize <= 10) return 10;
+  if (shortlistSize <= 16) return 13;
+  return 17;
+}
+
 interface MovieGuess {
   movieName: string;
   count: number;
@@ -19,10 +49,23 @@ interface CategoryStats {
   movieGuesses: MovieGuess[];
   usersWhoDidntGuessTop: string[]; // Users who didn't guess the most popular movie
   perfectMatches: UserMatch[]; // Groups of users with identical 5/5 selections
+  // New fields for results statistics
+  shortlistSize: number;
+  totalEarned: number;
+  maxPossible: number;
+  successRate: number; // percentage (money earned / max possible)
+  successfulUsers: number; // Users who got at least 1 Kč
+  userSuccessRate: number; // percentage (successful users / total participants)
+}
+
+// User accuracy breakdown
+interface UserAccuracyRow {
+  userName: string;
+  counts: number[]; // [0/5 count, 1/5 count, 2/5 count, 3/5 count, 4/5 count, 5/5 count]
 }
 
 export default async function Prenom2StatsPage() {
-  // Fetch all categories (excluding best-picture which is not part of prenom2)
+  // Fetch all categories with shortlist size and nominations
   const categories = await prisma.prenom2Category.findMany({
     where: {
       slug: { not: 'best-picture' },
@@ -31,8 +74,17 @@ export default async function Prenom2StatsPage() {
     select: {
       id: true,
       name: true,
+      movies: {
+        select: { movieId: true },
+      },
+      nominations: {
+        select: { movieId: true },
+      },
     },
   });
+
+  // Check if nominations exist
+  const hasNominations = categories.some((cat) => cat.nominations.length > 0);
 
   // Fetch all users who finalized prenom2
   const users = await prisma.user.findMany({
@@ -153,6 +205,34 @@ export default async function Prenom2StatsPage() {
       }
     });
 
+    // Calculate category success rate (only if nominations exist)
+    const shortlistSize = category.movies.length;
+    const nominatedMovieIds = new Set(category.nominations.map((n) => n.movieId));
+    let totalEarned = 0;
+    let maxPossible = 0;
+    let successfulUsers = 0;
+
+    if (hasNominations) {
+      completedUsers.forEach((userSel) => {
+        const correctCount = userSel.movies.filter((m) =>
+          nominatedMovieIds.has(m.id)
+        ).length;
+        const prize = calculatePrize(correctCount, shortlistSize);
+        totalEarned += prize;
+        maxPossible += getMaxPrize(shortlistSize);
+        if (prize >= 1) {
+          successfulUsers++;
+        }
+      });
+    }
+
+    const successRate =
+      maxPossible > 0 ? Math.round((totalEarned / maxPossible) * 100) : 0;
+    const userSuccessRate =
+      completedUsers.length > 0
+        ? Math.round((successfulUsers / completedUsers.length) * 100)
+        : 0;
+
     return {
       categoryId: category.id,
       categoryName: category.name,
@@ -160,8 +240,54 @@ export default async function Prenom2StatsPage() {
       movieGuesses,
       usersWhoDidntGuessTop,
       perfectMatches,
+      shortlistSize,
+      totalEarned,
+      maxPossible,
+      successRate,
+      successfulUsers,
+      userSuccessRate,
     };
   });
 
-  return <Prenom2StatsClient categories={categoryStats} />;
+  // Calculate user accuracy breakdown (only if nominations exist)
+  let userAccuracy: UserAccuracyRow[] = [];
+
+  if (hasNominations) {
+    userAccuracy = users
+      .map((user) => {
+        // For each category, count how many correct
+        const counts = [0, 0, 0, 0, 0, 0]; // [0/5, 1/5, 2/5, 3/5, 4/5, 5/5]
+
+        categories.forEach((category) => {
+          const userMovies = user.prenom2Selections
+            .filter((sel) => sel.categoryId === category.id)
+            .map((sel) => sel.movie.id);
+
+          // Only count if user completed category
+          if (userMovies.length === 5) {
+            const nominatedIds = new Set(
+              category.nominations.map((n) => n.movieId)
+            );
+            const correctCount = userMovies.filter((id) =>
+              nominatedIds.has(id)
+            ).length;
+            counts[correctCount]++;
+          }
+        });
+
+        return {
+          userName: user.name,
+          counts,
+        };
+      })
+      .sort((a, b) => a.userName.localeCompare(b.userName, 'cs'));
+  }
+
+  return (
+    <Prenom2StatsClient
+      categories={categoryStats}
+      userAccuracy={userAccuracy}
+      hasNominations={hasNominations}
+    />
+  );
 }
