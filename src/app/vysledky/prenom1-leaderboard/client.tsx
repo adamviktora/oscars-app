@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { Trophy, Medal, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface UserScore {
@@ -146,7 +146,7 @@ export function Prenom1LeaderboardClient({
               </thead>
               <tbody>
                 {users.map((user) => (
-                  <>
+                  <Fragment key={user.id}>
                     <tr
                       key={user.id}
                       className={`cursor-pointer hover:bg-base-200 ${
@@ -220,7 +220,7 @@ export function Prenom1LeaderboardClient({
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

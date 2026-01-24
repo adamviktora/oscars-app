@@ -64,6 +64,15 @@ interface UserAccuracyRow {
   counts: number[]; // [0/5 count, 1/5 count, 2/5 count, 3/5 count, 4/5 count, 5/5 count]
 }
 
+// Category accuracy breakdown
+interface CategoryAccuracyRow {
+  categoryId: number;
+  categoryName: string;
+  shortlistSize: number;
+  counts: number[]; // [0/5 count, 1/5 count, 2/5 count, 3/5 count, 4/5 count, 5/5 count]
+  minSuccessIndex: number; // minimum correct guesses needed for 1 Kč (2 for 20 films, 3 otherwise)
+}
+
 export default async function Prenom2StatsPage() {
   // Fetch all categories with shortlist size and nominations
   const categories = await prisma.prenom2Category.findMany({
@@ -251,6 +260,7 @@ export default async function Prenom2StatsPage() {
 
   // Calculate user accuracy breakdown (only if nominations exist)
   let userAccuracy: UserAccuracyRow[] = [];
+  let categoryAccuracy: CategoryAccuracyRow[] = [];
 
   if (hasNominations) {
     userAccuracy = users
@@ -281,12 +291,45 @@ export default async function Prenom2StatsPage() {
         };
       })
       .sort((a, b) => a.userName.localeCompare(b.userName, 'cs'));
+
+    // Calculate category accuracy breakdown
+    categoryAccuracy = categories.map((category) => {
+      const counts = [0, 0, 0, 0, 0, 0]; // [0/5, 1/5, 2/5, 3/5, 4/5, 5/5]
+      const nominatedIds = new Set(category.nominations.map((n) => n.movieId));
+      const shortlistSize = category.movies.length;
+
+      users.forEach((user) => {
+        const userMovies = user.prenom2Selections
+          .filter((sel) => sel.categoryId === category.id)
+          .map((sel) => sel.movie.id);
+
+        // Only count if user completed category
+        if (userMovies.length === 5) {
+          const correctCount = userMovies.filter((id) =>
+            nominatedIds.has(id)
+          ).length;
+          counts[correctCount]++;
+        }
+      });
+
+      // Minimum correct guesses for 1 Kč: 2 for shortlist >= 20, 3 otherwise
+      const minSuccessIndex = shortlistSize >= 20 ? 2 : 3;
+
+      return {
+        categoryId: category.id,
+        categoryName: category.name,
+        shortlistSize,
+        counts,
+        minSuccessIndex,
+      };
+    });
   }
 
   return (
     <Prenom2StatsClient
       categories={categoryStats}
       userAccuracy={userAccuracy}
+      categoryAccuracy={categoryAccuracy}
       hasNominations={hasNominations}
     />
   );

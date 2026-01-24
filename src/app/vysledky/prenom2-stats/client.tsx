@@ -39,22 +39,32 @@ interface UserAccuracyRow {
   counts: number[];
 }
 
+interface CategoryAccuracyRow {
+  categoryId: number;
+  categoryName: string;
+  shortlistSize: number;
+  counts: number[];
+  minSuccessIndex: number;
+}
+
 interface Props {
   categories: CategoryStats[];
   userAccuracy: UserAccuracyRow[];
+  categoryAccuracy: CategoryAccuracyRow[];
   hasNominations: boolean;
 }
 
 export function Prenom2StatsClient({
   categories,
   userAccuracy,
+  categoryAccuracy,
   hasNominations,
 }: Props) {
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(
     new Set([categories[0]?.categoryId])
   );
   const [activeTab, setActiveTab] = useState<
-    'categories' | 'accuracy' | 'success' | 'userSuccess'
+    'categories' | 'accuracy' | 'categoryAccuracy' | 'success' | 'userSuccess'
   >('categories');
 
   const toggleCategory = (categoryId: number) => {
@@ -90,7 +100,13 @@ export function Prenom2StatsClient({
               className={`tab ${activeTab === 'accuracy' ? 'tab-active' : ''}`}
               onClick={() => setActiveTab('accuracy')}
             >
-              🎯 Přesnost uživatelů
+              🎯 Přesnost - uživatelé
+            </button>
+            <button
+              className={`tab ${activeTab === 'categoryAccuracy' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('categoryAccuracy')}
+            >
+              📊 Přesnost - kategorie
             </button>
             <button
               className={`tab ${activeTab === 'userSuccess' ? 'tab-active' : ''}`}
@@ -154,6 +170,66 @@ export function Prenom2StatsClient({
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Accuracy Table */}
+      {activeTab === 'categoryAccuracy' && hasNominations && (
+        <div className="card bg-base-100 shadow-sm mb-6">
+          <div className="card-body">
+            <h2 className="card-title text-lg mb-4">
+              📊 Přesnost tipů podle kategorií
+            </h2>
+            <p className="text-sm text-base-content/60 mb-4">
+              Počet uživatelů, kteří uhodli daný počet filmů z 5 v každé
+              kategorii. Zelená = úspěch (zisk alespoň 1 Kč).
+            </p>
+            <div className="overflow-x-auto">
+              <table className="table table-sm">
+                <thead>
+                  <tr className="bg-base-200">
+                    <th>Kategorie</th>
+                    <th className="text-center">0/5</th>
+                    <th className="text-center">1/5</th>
+                    <th className="text-center">2/5</th>
+                    <th className="text-center">3/5</th>
+                    <th className="text-center">4/5</th>
+                    <th className="text-center">5/5</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {categoryAccuracy.map((cat) => (
+                    <tr key={cat.categoryId}>
+                      <td className="font-medium">
+                        {cat.categoryName}
+                        <span className="text-xs text-base-content/50 ml-2">
+                          ({cat.shortlistSize} filmů)
+                        </span>
+                      </td>
+                      {cat.counts.map((count, idx) => (
+                        <td
+                          key={idx}
+                          className={`text-center ${
+                            idx >= cat.minSuccessIndex && count > 0
+                              ? 'bg-green-500/20 font-bold text-green-400'
+                              : idx === 0 && count > 0
+                              ? 'bg-red-500/10 text-red-400'
+                              : ''
+                          }`}
+                        >
+                          {count > 0 ? count : '-'}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-base-content/50 mt-4">
+              Poznámka: U kategorií s 20 filmy je úspěch již od 2/5 správně
+              (1 Kč), u ostatních od 3/5.
+            </p>
           </div>
         </div>
       )}

@@ -186,7 +186,12 @@ export default async function Prenom2LeaderboardPage() {
   });
 
   // Sort users by total prize (desc)
-  userScores.sort((a, b) => b.totalPrize - a.totalPrize);
+  userScores.sort((a, b) => {
+    if (b.totalPrize !== a.totalPrize) {
+      return b.totalPrize - a.totalPrize;
+    }
+    return b.successfulCategories - a.successfulCategories;
+  });
 
   // Assign positions (same position for ties)
   userScores.forEach((user, index) => {
@@ -194,10 +199,13 @@ export default async function Prenom2LeaderboardPage() {
       user.position = 1;
     } else {
       const prev = userScores[index - 1];
-      if (user.totalPrize === prev.totalPrize) {
+      if (
+        user.totalPrize === prev.totalPrize &&
+        user.successfulCategories === prev.successfulCategories
+      ) {
         user.position = prev.position;
       } else {
-        user.position = index + 1;
+        user.position = prev.position + 1;
       }
     }
   });

@@ -114,7 +114,11 @@ export function Prenom2LeaderboardClient({ users }: Props) {
                       <td className="text-center hidden sm:table-cell">
                         <span className="badge badge-neutral">
                           {user.successfulCategories} /{' '}
-                          {user.categoryResults.length}
+                          {
+                            user.categoryResults.filter(
+                              (cat) => cat.participated
+                            ).length
+                          }
                         </span>
                       </td>
                       <td className="text-center">
