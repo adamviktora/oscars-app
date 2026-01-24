@@ -47,7 +47,8 @@ interface CategoryStats {
   categoryName: string;
   totalUsers: number; // Users who completed this category
   movieGuesses: MovieGuess[];
-  usersWhoDidntGuessTop: string[]; // Users who didn't guess the most popular movie
+  topMovies: MovieGuess[];
+  usersWhoDidntGuessTop: { [movieName: string]: string[] }; // Users who didn't guess the most popular movie
   perfectMatches: UserMatch[]; // Groups of users with identical 5/5 selections
   // New fields for results statistics
   shortlistSize: number;
@@ -135,10 +136,7 @@ export default async function Prenom2StatsPage() {
     );
 
     // Count guesses per movie
-    const movieCountMap = new Map<
-      string,
-      { count: number; users: string[] }
-    >();
+    const movieCountMap = new Map<string, { count: number; users: string[] }>();
 
     completedUsers.forEach((userSel) => {
       userSel.movies.forEach((movie) => {
@@ -165,17 +163,25 @@ export default async function Prenom2StatsPage() {
       });
 
     // Find users who didn't guess the most popular movie
-    const topMovie = movieGuesses[0];
+    const movieIsTop = (movie: MovieGuess) =>
+      movie.count === movieGuesses[0].count;
+    const topMovies = movieGuesses.filter(movieIsTop);
+
     const usersWhoDidntGuessTop =
-      topMovie && topMovie.count < completedUsers.length
-        ? completedUsers
-            .filter(
-              (userSel) =>
-                !userSel.movies.some((m) => m.name === topMovie.movieName)
-            )
-            .map((u) => u.userName)
-            .sort((a, b) => a.localeCompare(b, 'cs'))
-        : [];
+      topMovies.length > 0 && topMovies[0].count < completedUsers.length
+        ? Object.fromEntries(
+            topMovies.map((topMovie) => [
+              topMovie.movieName,
+              completedUsers
+                .filter(
+                  (userSel) =>
+                    !userSel.movies.some((m) => m.name === topMovie.movieName)
+                )
+                .map((u) => u.userName)
+                .sort((a, b) => a.localeCompare(b, 'cs')),
+            ])
+          )
+        : {};
 
     // Find perfect matches (users with identical 5/5 selections)
     const selectionSignatures = new Map<string, string[]>();
@@ -216,7 +222,9 @@ export default async function Prenom2StatsPage() {
 
     // Calculate category success rate (only if nominations exist)
     const shortlistSize = category.movies.length;
-    const nominatedMovieIds = new Set(category.nominations.map((n) => n.movieId));
+    const nominatedMovieIds = new Set(
+      category.nominations.map((n) => n.movieId)
+    );
     let totalEarned = 0;
     let maxPossible = 0;
     let successfulUsers = 0;
@@ -247,6 +255,7 @@ export default async function Prenom2StatsPage() {
       categoryName: category.name,
       totalUsers: completedUsers.length,
       movieGuesses,
+      topMovies,
       usersWhoDidntGuessTop,
       perfectMatches,
       shortlistSize,
