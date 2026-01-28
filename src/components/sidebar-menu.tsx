@@ -12,6 +12,12 @@ export function SidebarMenu() {
 
   const menuItems = [
     {
+      label: 'Nominační kolo',
+      href: '/nominations',
+      enabled: true,
+      icon: '🏆',
+    },
+    {
       label: 'Prenominační kolo',
       href: '/prenomination',
       enabled: true,
@@ -30,12 +36,6 @@ export function SidebarMenu() {
       href: '/prenomination2',
       enabled: true,
       icon: '🎬',
-    },
-    {
-      label: 'Nominační kolo',
-      href: '/nomination',
-      enabled: false,
-      icon: '🏆',
     },
   ];
 

@@ -21,12 +21,14 @@ export async function GET() {
       select: {
         prenom1FinalSubmitted: true,
         prenom2FinalSubmitted: true,
+        nominationFinalSubmitted: true,
       },
     });
 
     return NextResponse.json({
       prenom1FinalSubmitted: user?.prenom1FinalSubmitted ?? false,
       prenom2FinalSubmitted: user?.prenom2FinalSubmitted ?? false,
+      nominationFinalSubmitted: user?.nominationFinalSubmitted ?? false,
     });
   } catch (error) {
     console.error('Error fetching final submission status:', error);

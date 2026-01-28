@@ -37,11 +37,19 @@ export default async function Home() {
     <div className="container mx-auto px-4 py-8">
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-4">Vítej, {session.user.name}!</h2>
-        <p className="text-base-content/70 mb-6">
-          Tipování v prenominačních kolech je u konce.
-          <br />
-          Podívej se na výsledky, tipy ostatních účastníků a statistiky.
-        </p>
+
+        {/* Nomination round - main CTA */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30">
+          <h3 className="text-xl font-bold mb-3 flex items-center justify-center gap-2">
+            🏆 Nominační kolo
+          </h3>
+          <p className="text-base-content/70 mb-4">
+            Nominace jsou venku a s nimi i možnost zadat své tipy!
+          </p>
+          <Link href="/nominations" className="btn btn-warning btn-lg">
+            Začít tipovat
+          </Link>
+        </div>
 
         {/* Admin section */}
         {userIsAdmin && (

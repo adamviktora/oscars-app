@@ -8,19 +8,22 @@ datasource db {
 }
 
 model User {
-  id                    String                     @id
-  name                  String
-  email                 String                     @unique
-  emailVerified         Boolean                    @default(false)
-  image                 String?
-  createdAt             DateTime                   @default(now())
-  updatedAt             DateTime                   @default(now()) @updatedAt
-  prenom1FinalSubmitted Boolean                    @default(false)
-  prenom2FinalSubmitted Boolean                    @default(false)
-  accounts              Account[]
-  sessions              Session[]
-  movieSelectionsPrenom UserMovieSelectionPrenom[]
-  prenom2Selections     UserPrenom2Selection[]
+  id                          String                     @id
+  name                        String
+  email                       String                     @unique
+  emailVerified               Boolean                    @default(false)
+  image                       String?
+  createdAt                   DateTime                   @default(now())
+  updatedAt                   DateTime                   @default(now()) @updatedAt
+  prenom1FinalSubmitted       Boolean                    @default(false)
+  prenom2FinalSubmitted       Boolean                    @default(false)
+  nominationFinalSubmitted    Boolean                    @default(false)
+  keepNominationDefaultOrder  Boolean                    @default(false)
+  accounts                    Account[]
+  sessions                    Session[]
+  movieSelectionsPrenom       UserMovieSelectionPrenom[]
+  prenom2Selections           UserPrenom2Selection[]
+  nominationRankings          UserNominationRanking[]
 
   @@map("user")
 }
@@ -141,18 +144,38 @@ model UserPrenom2Selection {
 }
 
 model Nomination {
-  id           Int      @id @default(autoincrement())
+  id           Int                     @id @default(autoincrement())
   categoryId   Int
   movieId      Int
   actorId      Int?
-  defaultOrder Int?     // 1-10 for best picture, 1-5 for others (order in official nomination list)
-  createdAt    DateTime @default(now())
-  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  movie        Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  actor        Actor?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  defaultOrder Int?                    // 1-10 for best picture, 1-5 for others (order in official nomination list)
+  createdAt    DateTime                @default(now())
+  category     Category                @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  movie        Movie                   @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  actor        Actor?                  @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  userRankings UserNominationRanking[]
 
   @@unique([categoryId, movieId, actorId])
   @@map("nomination")
+}
+
+// ============================================
+// USER NOMINATION RANKINGS (Oscar predictions)
+// ============================================
+
+model UserNominationRanking {
+  id           Int        @id @default(autoincrement())
+  userId       String
+  nominationId Int
+  ranking      Int        // 1-5 (or 1-10 for best picture)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nomination   Nomination @relation(fields: [nominationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, nominationId])
+  @@map("user_nomination_ranking")
 }
 
 // ============================================
