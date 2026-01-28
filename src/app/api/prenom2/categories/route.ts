@@ -73,14 +73,14 @@ function czechCompare(a: string, b: string): number {
 export async function GET() {
   try {
     // Cache categories for 5 minutes using Prisma Accelerate
-    // Exclude best-picture which is not part of prenom2
-    const categories = await prisma.prenom2Category.findMany({
+    // Only include categories that are part of prenom2
+    const categories = await prisma.category.findMany({
       where: {
-        slug: { not: 'best-picture' },
+        isPrenom2: true,
       },
       orderBy: { order: 'asc' },
       include: {
-        movies: {
+        shortlistNominations: {
           include: {
             movie: true,
           },
@@ -101,10 +101,10 @@ export async function GET() {
       name: category.name,
       slug: category.slug,
       order: category.order,
-      movies: category.movies
-        .map((cm) => ({
-          id: cm.movie.id,
-          name: cm.movie.name,
+      movies: category.shortlistNominations
+        .map((sn) => ({
+          id: sn.movie.id,
+          name: sn.movie.name,
         }))
         // Sort using Czech alphabet order (Č after C, CH after H, Ď after D, etc.)
         .sort((a, b) => czechCompare(a.name, b.name)),

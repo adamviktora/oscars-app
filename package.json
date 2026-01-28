@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
+    "add-categories": "tsx scripts/add-oscar-categories.ts",
+    "upload-nominations": "tsx scripts/upload-nominations.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -19,6 +21,7 @@
     "@prisma/extension-accelerate": "^2.0.2",
     "better-auth": "^1.3.34",
     "daisyui": "^5.3.9",
+    "dotenv": "^17.2.3",
     "lucide-react": "^0.555.0",
     "next": "16.0.10",
     "react": "19.2.0",

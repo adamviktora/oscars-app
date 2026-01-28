@@ -2,14 +2,14 @@ import prisma from '@/lib/prisma';
 import { Nominations2Client } from './client';
 
 export default async function AdminNominations2Page() {
-  // Fetch all categories with their movies (excluding best-picture which is handled separately)
-  const categories = await prisma.prenom2Category.findMany({
+  // Fetch all categories with their movies (only prenom2 categories)
+  const categories = await prisma.category.findMany({
     where: {
-      slug: { not: 'best-picture' },
+      isPrenom2: true,
     },
     orderBy: { order: 'asc' },
     include: {
-      movies: {
+      shortlistNominations: {
         include: {
           movie: true,
         },
@@ -27,9 +27,9 @@ export default async function AdminNominations2Page() {
     id: cat.id,
     name: cat.name,
     slug: cat.slug,
-    movies: cat.movies.map((cm) => ({
-      id: cm.movie.id,
-      name: cm.movie.name,
+    movies: cat.shortlistNominations.map((sn) => ({
+      id: sn.movie.id,
+      name: sn.movie.name,
     })),
     nominatedMovieIds: cat.nominations.map((n) => n.movieId),
   }));

@@ -52,16 +52,16 @@ export interface UserEarnings {
 }
 
 export default async function Prenom2EarningsPage() {
-  // Get all categories with their shortlist size and nominations
-  const categories = await prisma.prenom2Category.findMany({
+  // Get all categories with their shortlist size and nominations (only prenom2)
+  const categories = await prisma.category.findMany({
     where: {
-      slug: { not: 'best-picture' },
+      isPrenom2: true,
     },
     orderBy: { order: 'asc' },
     select: {
       id: true,
       name: true,
-      movies: {
+      shortlistNominations: {
         select: { movieId: true },
       },
       nominations: {
@@ -91,7 +91,7 @@ export default async function Prenom2EarningsPage() {
       cat.id,
       {
         name: cat.name,
-        shortlistSize: cat.movies.length,
+        shortlistSize: cat.shortlistNominations.length,
         nominatedMovieIds: new Set(cat.nominations.map((n) => n.movieId)),
       },
     ])

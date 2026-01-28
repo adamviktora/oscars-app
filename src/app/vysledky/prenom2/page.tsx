@@ -14,10 +14,10 @@ export default async function Prenom2ResultsPage() {
     select: { prenom2FinalSubmitted: true },
   }) : null;
 
-  // Fetch all categories (excluding best-picture which is not part of prenom2)
-  const categories = await prisma.prenom2Category.findMany({
+  // Fetch all categories (only prenom2 categories)
+  const categories = await prisma.category.findMany({
     where: {
-      slug: { not: 'best-picture' },
+      isPrenom2: true,
     },
     orderBy: { order: 'asc' },
     select: {

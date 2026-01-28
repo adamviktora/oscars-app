@@ -14,7 +14,7 @@ interface UserScore {
 
 export default async function Prenom1LeaderboardPage() {
   // Get the best-picture category and its nominations
-  const bestPictureCategory = await prisma.prenom2Category.findUnique({
+  const bestPictureCategory = await prisma.category.findUnique({
     where: { slug: 'best-picture' },
     include: {
       nominations: {

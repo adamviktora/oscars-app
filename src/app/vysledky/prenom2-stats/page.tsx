@@ -75,16 +75,16 @@ interface CategoryAccuracyRow {
 }
 
 export default async function Prenom2StatsPage() {
-  // Fetch all categories with shortlist size and nominations
-  const categories = await prisma.prenom2Category.findMany({
+  // Fetch all categories with shortlist size and nominations (only prenom2)
+  const categories = await prisma.category.findMany({
     where: {
-      slug: { not: 'best-picture' },
+      isPrenom2: true,
     },
     orderBy: { order: 'asc' },
     select: {
       id: true,
       name: true,
-      movies: {
+      shortlistNominations: {
         select: { movieId: true },
       },
       nominations: {
@@ -221,7 +221,7 @@ export default async function Prenom2StatsPage() {
     });
 
     // Calculate category success rate (only if nominations exist)
-    const shortlistSize = category.movies.length;
+    const shortlistSize = category.shortlistNominations.length;
     const nominatedMovieIds = new Set(
       category.nominations.map((n) => n.movieId)
     );
@@ -305,7 +305,7 @@ export default async function Prenom2StatsPage() {
     categoryAccuracy = categories.map((category) => {
       const counts = [0, 0, 0, 0, 0, 0]; // [0/5, 1/5, 2/5, 3/5, 4/5, 5/5]
       const nominatedIds = new Set(category.nominations.map((n) => n.movieId));
-      const shortlistSize = category.movies.length;
+      const shortlistSize = category.shortlistNominations.length;
 
       users.forEach((user) => {
         const userMovies = user.prenom2Selections

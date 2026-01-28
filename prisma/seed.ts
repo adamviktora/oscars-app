@@ -49,17 +49,19 @@ async function main() {
   console.log('\nSeeding Prenom 2.0 categories and movies...');
 
   for (const categoryData of categoriesData) {
-    // Create or update the category
-    const category = await prisma.prenom2Category.upsert({
+    // Create or update the category (mark as prenom2 category)
+    const category = await prisma.category.upsert({
       where: { slug: categoryData.slug },
       update: {
         name: categoryData.name,
         order: categoryData.order,
+        isPrenom2: true,
       },
       create: {
         name: categoryData.name,
         slug: categoryData.slug,
         order: categoryData.order,
+        isPrenom2: true,
       },
     });
     console.log(`\nCategory: ${category.name}`);
@@ -78,8 +80,8 @@ async function main() {
         console.log(`  Created movie: ${movieName}`);
       }
 
-      // Link movie to category (upsert to avoid duplicates)
-      await prisma.prenom2CategoryMovie.upsert({
+      // Link movie to category shortlist (upsert to avoid duplicates)
+      await prisma.shortlistNomination.upsert({
         where: {
           categoryId_movieId: {
             categoryId: category.id,

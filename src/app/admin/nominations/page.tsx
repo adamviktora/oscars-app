@@ -77,16 +77,17 @@ export default async function AdminNominationsPage() {
     .map(({ id, name }) => ({ id, name }));
 
   // Get or create the "Nejlepší film" category for nominations
-  let bestPictureCategory = await prisma.prenom2Category.findUnique({
+  let bestPictureCategory = await prisma.category.findUnique({
     where: { slug: 'best-picture' },
   });
 
   if (!bestPictureCategory) {
-    bestPictureCategory = await prisma.prenom2Category.create({
+    bestPictureCategory = await prisma.category.create({
       data: {
         name: 'Nejlepší film',
         slug: 'best-picture',
         order: 0,
+        isPrenom2: false,
       },
     });
   }

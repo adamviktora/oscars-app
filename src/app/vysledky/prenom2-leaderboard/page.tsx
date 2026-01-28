@@ -45,16 +45,16 @@ export interface UserScore {
 }
 
 export default async function Prenom2LeaderboardPage() {
-  // Get all categories (excluding best-picture) with their shortlist size
-  const categories = await prisma.prenom2Category.findMany({
+  // Get all categories (only prenom2) with their shortlist size
+  const categories = await prisma.category.findMany({
     where: {
-      slug: { not: 'best-picture' },
+      isPrenom2: true,
     },
     orderBy: { order: 'asc' },
     select: {
       id: true,
       name: true,
-      movies: {
+      shortlistNominations: {
         select: { movieId: true },
       },
       nominations: {
@@ -89,7 +89,7 @@ export default async function Prenom2LeaderboardPage() {
       cat.id,
       {
         name: cat.name,
-        shortlistSize: cat.movies.length,
+        shortlistSize: cat.shortlistNominations.length,
         nominatedMovieIds: new Set(cat.nominations.map((n) => n.movieId)),
         nominatedMovieNames: new Map(
           cat.nominations.map((n) => [n.movieId, n.movie.name])

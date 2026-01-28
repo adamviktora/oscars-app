@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,28 +8,27 @@ datasource db {
 }
 
 model User {
-  id                       String                     @id
-  name                     String
-  email                    String
-  emailVerified            Boolean                    @default(false)
-  image                    String?
-  createdAt                DateTime                   @default(now())
-  updatedAt                DateTime                   @default(now()) @updatedAt
-  prenom1FinalSubmitted    Boolean                    @default(false)
-  prenom2FinalSubmitted    Boolean                    @default(false)
-  sessions                 Session[]
-  accounts                 Account[]
-  movieSelectionsPrenom    UserMovieSelectionPrenom[]
-  prenom2Selections        UserPrenom2Selection[]
+  id                    String                     @id
+  name                  String
+  email                 String                     @unique
+  emailVerified         Boolean                    @default(false)
+  image                 String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @default(now()) @updatedAt
+  prenom1FinalSubmitted Boolean                    @default(false)
+  prenom2FinalSubmitted Boolean                    @default(false)
+  accounts              Account[]
+  sessions              Session[]
+  movieSelectionsPrenom UserMovieSelectionPrenom[]
+  prenom2Selections     UserPrenom2Selection[]
 
-  @@unique([email])
   @@map("user")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -40,7 +36,6 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@map("session")
 }
 
@@ -49,7 +44,6 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -59,6 +53,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
 }
@@ -75,15 +70,15 @@ model Verification {
 }
 
 model Movie {
-  id                    Int                        @id @default(autoincrement())
-  name                  String
-  prenom1Order          Int?                       // Order in Prenomination 1.0 (null = not in prenom1)
-  createdAt             DateTime                   @default(now())
-  updatedAt             DateTime                   @updatedAt
-  userSelectionsPrenom  UserMovieSelectionPrenom[]
-  prenom2Categories     Prenom2CategoryMovie[]
-  prenom2Selections     UserPrenom2Selection[]
-  nominations           Nomination[]
+  id                   Int                        @id @default(autoincrement())
+  name                 String
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  prenom1Order         Int?
+  nominations          Nomination[]
+  shortlistNominations ShortlistNomination[]
+  userSelectionsPrenom UserMovieSelectionPrenom[]
+  prenom2Selections    UserPrenom2Selection[]
 
   @@map("movie")
 }
@@ -92,82 +87,90 @@ model UserMovieSelectionPrenom {
   id        Int      @id @default(autoincrement())
   userId    String
   movieId   Int
-  rating    String   // YES, MAYBE, NO
-  ranking   Int?     // 1-10, only for YES
+  rating    String
+  ranking   Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   movie     Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, movieId])
   @@map("user_movie_selection_prenom")
 }
 
-// ============================================
-// PRENOMINATION 2.0 - Categories & Selections
-// ============================================
+model Category {
+  id                   Int                    @id(map: "prenom2_category_pkey") @default(autoincrement())
+  name                 String                 @unique(map: "prenom2_category_name_key")
+  slug                 String                 @unique(map: "prenom2_category_slug_key")
+  order                Int                    @default(0)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  isPrenom2            Boolean                @default(false)
+  nominations          Nomination[]
+  shortlistNominations ShortlistNomination[]
+  selections           UserPrenom2Selection[]
 
-model Prenom2Category {
-  id          Int                      @id @default(autoincrement())
-  name        String                   @unique  // e.g. "Hudba", "Píseň", etc.
-  slug        String                   @unique  // e.g. "music", "song", etc.
-  order       Int                      @default(0)
-  createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
-  
-  movies      Prenom2CategoryMovie[]
-  selections  UserPrenom2Selection[]
-  nominations Nomination[]
-  
-  @@map("prenom2_category")
+  @@map("category")
 }
 
-// Junction table: which movies are nominated in which categories
-model Prenom2CategoryMovie {
-  id         Int              @id @default(autoincrement())
+model ShortlistNomination {
+  id         Int      @id(map: "prenom2_category_movie_pkey") @default(autoincrement())
   categoryId Int
   movieId    Int
-  createdAt  DateTime         @default(now())
-  
-  category   Prenom2Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  movie      Movie            @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  
-  @@unique([categoryId, movieId])
-  @@map("prenom2_category_movie")
+  createdAt  DateTime @default(now())
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "prenom2_category_movie_categoryId_fkey")
+  movie      Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade, map: "prenom2_category_movie_movieId_fkey")
+
+  @@unique([categoryId, movieId], map: "prenom2_category_movie_categoryId_movieId_key")
+  @@map("shortlist_nomination")
 }
 
-// User's selection in Prenom 2.0 (max 5 per category)
 model UserPrenom2Selection {
-  id         Int              @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   userId     String
   categoryId Int
   movieId    Int
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
-  
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category   Prenom2Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  movie      Movie            @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  movie      Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, categoryId, movieId])
   @@map("user_prenom2_selection")
 }
 
+model Nomination {
+  id           Int      @id @default(autoincrement())
+  categoryId   Int
+  movieId      Int
+  actorId      Int?
+  defaultOrder Int?     // 1-10 for best picture, 1-5 for others (order in official nomination list)
+  createdAt    DateTime @default(now())
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  movie        Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  actor        Actor?   @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@unique([categoryId, movieId, actorId])
+  @@map("nomination")
+}
+
 // ============================================
-// OFFICIAL NOMINATIONS
+// ACTORS
 // ============================================
 
-// Official Oscar nominations - which movies were actually nominated in which categories
-model Nomination {
-  id         Int              @id @default(autoincrement())
-  categoryId Int
-  movieId    Int
-  createdAt  DateTime         @default(now())
-  
-  category   Prenom2Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  movie      Movie            @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  
-  @@unique([categoryId, movieId])
-  @@map("nomination")
+enum Gender {
+  MALE
+  FEMALE
+}
+
+model Actor {
+  id          Int          @id @default(autoincrement())
+  fullName    String
+  gender      Gender
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  nominations Nomination[]
+
+  @@map("actor")
 }
