@@ -22,8 +22,40 @@ import {
   Save,
   Loader2,
   Trophy,
+  Settings,
 } from 'lucide-react';
 import { SortableNominationCard } from '@/components/nominations/sortable-nomination-card';
+
+// Category display order for nominations page
+const CATEGORY_ORDER = [
+  'best-picture',
+  'director',
+  'actor',
+  'actress',
+  'supporting-actor',
+  'supporting-actress',
+  'casting',
+  'original-screenplay',
+  'adapted-screenplay',
+  'camera',
+  'film-editing',
+  'music',
+  'song',
+  'production-design',
+  'costume-design',
+  'makeup',
+  'sound',
+  'visual-effects',
+  'international',
+  'animated-feature',
+  'documentary',
+  'short-live-action',
+  'short-animated',
+  'short-documentary',
+];
+
+// Actor/actress categories (show actor name prominently)
+const ACTOR_CATEGORIES = ['actor', 'actress', 'supporting-actor', 'supporting-actress'];
 
 interface Nomination {
   id: number;
@@ -69,10 +101,10 @@ export default function NominationsPage() {
     new Map()
   );
 
-  // Track nomination order per category for drag-and-drop
-  const [nominationOrders, setNominationOrders] = useState<
-    Map<number, number[]>
-  >(new Map());
+  // Visual order per category: Map<categoryId, nominationId[]>
+  const [visualOrders, setVisualOrders] = useState<Map<number, number[]>>(
+    new Map()
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -99,24 +131,25 @@ export default function NominationsPage() {
         if (!categoriesRes.ok)
           throw new Error('Nepodařilo se načíst kategorie');
         const categoriesData: Category[] = await categoriesRes.json();
-        setCategories(categoriesData);
-
-        // Initialize nomination orders per category
-        const orders = new Map<number, number[]>();
-        categoriesData.forEach((cat) => {
-          orders.set(
-            cat.id,
-            cat.nominations.map((n) => n.id)
-          );
+        
+        // Sort categories by CATEGORY_ORDER
+        const sortedCategories = [...categoriesData].sort((a, b) => {
+          const aIndex = CATEGORY_ORDER.indexOf(a.slug);
+          const bIndex = CATEGORY_ORDER.indexOf(b.slug);
+          // If not in order list, put at end
+          if (aIndex === -1 && bIndex === -1) return 0;
+          if (aIndex === -1) return 1;
+          if (bIndex === -1) return -1;
+          return aIndex - bIndex;
         });
-        setNominationOrders(orders);
+        setCategories(sortedCategories);
 
         // Load user's saved rankings
+        const rankingsMap = new Map<number, number>();
         try {
           const rankingsRes = await fetch('/api/nominations/rankings');
           if (rankingsRes.ok) {
             const rankingsData: SavedRanking[] = await rankingsRes.json();
-            const rankingsMap = new Map<number, number>();
             rankingsData.forEach((r) => {
               rankingsMap.set(r.nominationId, r.ranking);
             });
@@ -126,6 +159,22 @@ export default function NominationsPage() {
         } catch {
           console.log('No existing rankings found');
         }
+
+        // Initialize visual orders based on rankings
+        const orders = new Map<number, number[]>();
+        categoriesData.forEach((cat) => {
+          // Sort nominations: ranked first by rank, then unranked by defaultOrder
+          const sorted = [...cat.nominations].sort((a, b) => {
+            const aRank = rankingsMap.get(a.id);
+            const bRank = rankingsMap.get(b.id);
+            if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+            if (aRank !== undefined) return -1;
+            if (bRank !== undefined) return 1;
+            return (a.defaultOrder ?? 999) - (b.defaultOrder ?? 999);
+          });
+          orders.set(cat.id, sorted.map((n) => n.id));
+        });
+        setVisualOrders(orders);
 
         // Load final submission status
         try {
@@ -176,18 +225,6 @@ export default function NominationsPage() {
     } catch {
       console.log('Could not save setting');
     }
-
-    // If turning ON, reset nomination orders to default
-    if (newValue) {
-      const orders = new Map<number, number[]>();
-      categories.forEach((cat) => {
-        orders.set(
-          cat.id,
-          cat.nominations.map((n) => n.id)
-        );
-      });
-      setNominationOrders(orders);
-    }
   };
 
   const handleRankingChange = useCallback(
@@ -201,24 +238,64 @@ export default function NominationsPage() {
         category.nominations.map((n) => n.id)
       );
 
+      // Find current ranking of the nomination being changed
+      const currentRanking = localRankings.get(nominationId);
+      
+      // Find if another nomination in this category has the target ranking
+      let conflictingNomId: number | null = null;
+      for (const [nomId, rank] of localRankings) {
+        if (
+          categoryNominationIds.has(nomId) &&
+          rank === newRanking &&
+          nomId !== nominationId
+        ) {
+          conflictingNomId = nomId;
+          break;
+        }
+      }
+
+      // Calculate new rank for conflicting movie (if any)
+      let conflictNewRank: number | null = null;
+      if (conflictingNomId !== null && !currentRanking) {
+        // Clicked movie had no ranking - find next available rank for conflicting movie
+        const maxRank = category.slug === 'best-picture' ? 10 : 5;
+        const usedRanks = new Set<number>();
+        for (const [nomId, rank] of localRankings) {
+          if (categoryNominationIds.has(nomId) && nomId !== conflictingNomId) {
+            usedRanks.add(rank);
+          }
+        }
+        usedRanks.add(newRanking); // The rank we're taking
+        
+        // Find next available rank (prefer higher than current)
+        for (let r = newRanking + 1; r <= maxRank; r++) {
+          if (!usedRanks.has(r)) {
+            conflictNewRank = r;
+            break;
+          }
+        }
+        // If no higher rank available, try lower
+        if (conflictNewRank === null) {
+          for (let r = newRanking - 1; r >= 1; r--) {
+            if (!usedRanks.has(r)) {
+              conflictNewRank = r;
+              break;
+            }
+          }
+        }
+      }
+
+      // Update rankings
       setLocalRankings((prev) => {
         const next = new Map(prev);
 
-        // Find if another nomination in this category has this ranking
-        for (const [nomId, rank] of next) {
-          if (
-            categoryNominationIds.has(nomId) &&
-            rank === newRanking &&
-            nomId !== nominationId
-          ) {
-            // Swap rankings
-            const currentRanking = next.get(nominationId);
-            if (currentRanking) {
-              next.set(nomId, currentRanking);
-            } else {
-              next.delete(nomId);
-            }
-            break;
+        if (conflictingNomId !== null) {
+          if (currentRanking) {
+            // Both movies have rankings - swap them
+            next.set(conflictingNomId, currentRanking);
+          } else if (conflictNewRank !== null) {
+            // Clicked movie had no ranking - shift conflicting movie's rank
+            next.set(conflictingNomId, conflictNewRank);
           }
         }
 
@@ -226,22 +303,41 @@ export default function NominationsPage() {
         return next;
       });
 
-      // When keepDefaultOrder is OFF, also reorder visually based on ranking
+      // Update visual order - move items to their rank positions
       if (!keepDefaultOrder) {
-        setNominationOrders((prev) => {
+        setVisualOrders((prev) => {
           const currentOrder = prev.get(categoryId) || category.nominations.map((n) => n.id);
           const newOrder = [...currentOrder];
           
-          // Find current index of the nomination
-          const currentIndex = newOrder.indexOf(nominationId);
-          if (currentIndex === -1) return prev;
-          
-          // Remove from current position
-          newOrder.splice(currentIndex, 1);
-          
-          // Insert at position based on ranking (ranking 1 = index 0, etc.)
-          const targetIndex = Math.min(newRanking - 1, newOrder.length);
-          newOrder.splice(targetIndex, 0, nominationId);
+          const clickedIndex = newOrder.indexOf(nominationId);
+          const targetIndex = newRanking - 1; // rank 1 = index 0
+
+          if (conflictingNomId !== null && currentRanking) {
+            // Both movies had rankings - swap their positions
+            const conflictingIndex = newOrder.indexOf(conflictingNomId);
+            if (clickedIndex !== -1 && conflictingIndex !== -1) {
+              newOrder[clickedIndex] = conflictingNomId;
+              newOrder[conflictingIndex] = nominationId;
+            }
+          } else {
+            // Either no conflict, or clicked movie had no ranking
+            // Move clicked movie to target position
+            if (clickedIndex !== -1) {
+              newOrder.splice(clickedIndex, 1);
+              const insertIndex = Math.min(targetIndex, newOrder.length);
+              newOrder.splice(insertIndex, 0, nominationId);
+            }
+            
+            // If conflicting movie got a new rank, move it to that position too
+            if (conflictingNomId !== null && conflictNewRank !== null) {
+              const conflictCurrentIndex = newOrder.indexOf(conflictingNomId);
+              if (conflictCurrentIndex !== -1) {
+                newOrder.splice(conflictCurrentIndex, 1);
+                const conflictTargetIndex = Math.min(conflictNewRank - 1, newOrder.length);
+                newOrder.splice(conflictTargetIndex, 0, conflictingNomId);
+              }
+            }
+          }
           
           const next = new Map(prev);
           next.set(categoryId, newOrder);
@@ -249,7 +345,59 @@ export default function NominationsPage() {
         });
       }
     },
-    [categories, finalSubmitted, keepDefaultOrder]
+    [categories, finalSubmitted, keepDefaultOrder, localRankings]
+  );
+
+  const handleRankingClear = useCallback(
+    (nominationId: number) => {
+      if (finalSubmitted) return;
+
+      setLocalRankings((prev) => {
+        const next = new Map(prev);
+        next.delete(nominationId);
+        return next;
+      });
+    },
+    [finalSubmitted]
+  );
+
+  // Get sorted nominations for a category
+  const getSortedNominations = useCallback(
+    (category: Category) => {
+      if (keepDefaultOrder) {
+        // Keep default order from nomination list (sorted by defaultOrder)
+        return [...category.nominations].sort((a, b) => {
+          const aOrder = a.defaultOrder ?? 999;
+          const bOrder = b.defaultOrder ?? 999;
+          return aOrder - bOrder;
+        });
+      }
+
+      // When keepDefaultOrder is OFF, use visual order
+      const order = visualOrders.get(category.id);
+      if (!order || order.length === 0) {
+        // Fallback: sort by ranking
+        return [...category.nominations].sort((a, b) => {
+          const aRanking = localRankings.get(a.id);
+          const bRanking = localRankings.get(b.id);
+          if (aRanking !== undefined && bRanking !== undefined) return aRanking - bRanking;
+          if (aRanking !== undefined) return -1;
+          if (bRanking !== undefined) return 1;
+          return (a.defaultOrder ?? 999) - (b.defaultOrder ?? 999);
+        });
+      }
+
+      // Sort by visual order
+      return [...category.nominations].sort((a, b) => {
+        const aIndex = order.indexOf(a.id);
+        const bIndex = order.indexOf(b.id);
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    },
+    [keepDefaultOrder, visualOrders, localRankings]
   );
 
   const handleDragEnd = useCallback(
@@ -262,7 +410,8 @@ export default function NominationsPage() {
       const category = categories.find((c) => c.id === categoryId);
       if (!category) return;
 
-      const currentOrder = nominationOrders.get(categoryId) || [];
+      // Get current visual order
+      const currentOrder = visualOrders.get(categoryId) || category.nominations.map((n) => n.id);
       const oldIndex = currentOrder.indexOf(Number(active.id));
       const newIndex = currentOrder.indexOf(Number(over.id));
 
@@ -270,14 +419,14 @@ export default function NominationsPage() {
 
       const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
 
-      // Update nomination orders
-      setNominationOrders((prev) => {
+      // Update visual order
+      setVisualOrders((prev) => {
         const next = new Map(prev);
         next.set(categoryId, newOrder);
         return next;
       });
 
-      // Simple logic:
+      // Update rankings based on new visual order
       // 1. Dragged movie always gets ranking = its new position
       // 2. Other movies that already had a ranking get ranking = their new position
       // 3. Movies without ranking stay without ranking
@@ -297,7 +446,7 @@ export default function NominationsPage() {
         return next;
       });
     },
-    [categories, nominationOrders, finalSubmitted]
+    [categories, finalSubmitted, visualOrders]
   );
 
   const handleSave = async (): Promise<boolean> => {
@@ -375,21 +524,6 @@ export default function NominationsPage() {
     }
   };
 
-  // Get sorted nominations for a category
-  const getSortedNominations = (category: Category) => {
-    const order = nominationOrders.get(category.id) || [];
-    if (order.length === 0) return category.nominations;
-
-    return [...category.nominations].sort((a, b) => {
-      const aIndex = order.indexOf(a.id);
-      const bIndex = order.indexOf(b.id);
-      if (aIndex === -1 && bIndex === -1) return 0;
-      if (aIndex === -1) return 1;
-      if (bIndex === -1) return -1;
-      return aIndex - bIndex;
-    });
-  };
-
   // Calculate progress
   const totalCategories = categories.length;
   const completedCategories = categories.filter((cat) => {
@@ -430,20 +564,35 @@ export default function NominationsPage() {
         skončí. <strong>1 = vítěz</strong>.
       </p>
 
-      {/* Settings toggle */}
+      {/* Mode selector */}
       {settingsLoaded && !loading && !finalSubmitted && (
-        <div className="form-control mb-6">
-          <label className="label cursor-pointer justify-start gap-4">
-            <input
-              type="checkbox"
-              className="toggle toggle-primary"
-              checked={keepDefaultOrder}
-              onChange={(e) => handleToggleKeepDefaultOrder(e.target.checked)}
-            />
-            <span className="label-text">
+        <div className="flex flex-col items-start gap-2 mb-6">
+          <div className="flex items-center gap-2 text-sm text-base-content/70">
+            <Settings className="w-4 h-4" />
+            <span>Nastavte si způsob řazení</span>
+          </div>
+          <div className="inline-flex join border border-base-300 rounded-lg">
+            <button
+              className={`join-item btn btn-sm ${
+                keepDefaultOrder
+                  ? 'btn-primary'
+                  : 'btn-ghost bg-base-200 hover:bg-base-300'
+              }`}
+              onClick={() => handleToggleKeepDefaultOrder(true)}
+            >
               Zachovat pořadí z nominačního listu
-            </span>
-          </label>
+            </button>
+            <button
+              className={`join-item btn btn-sm ${
+                !keepDefaultOrder
+                  ? 'btn-primary'
+                  : 'btn-ghost bg-base-200 hover:bg-base-300'
+              }`}
+              onClick={() => handleToggleKeepDefaultOrder(false)}
+            >
+              Řadit přetažením
+            </button>
+          </div>
         </div>
       )}
 
@@ -555,9 +704,11 @@ export default function NominationsPage() {
                           maxRanking={maxRanking}
                           disabled={finalSubmitted}
                           disableDrag={true}
+                          isActorCategory={ACTOR_CATEGORIES.includes(category.slug)}
                           onRankingChange={(nomId, ranking) =>
                             handleRankingChange(category.id, nomId, ranking)
                           }
+                          onRankingClear={handleRankingClear}
                         />
                       ))}
                     </div>
@@ -582,9 +733,11 @@ export default function NominationsPage() {
                               ranking={localRankings.get(nomination.id) || null}
                               maxRanking={maxRanking}
                               disabled={finalSubmitted}
+                              isActorCategory={ACTOR_CATEGORIES.includes(category.slug)}
                               onRankingChange={(nomId, ranking) =>
                                 handleRankingChange(category.id, nomId, ranking)
                               }
+                              onRankingClear={handleRankingClear}
                             />
                           ))}
                         </div>

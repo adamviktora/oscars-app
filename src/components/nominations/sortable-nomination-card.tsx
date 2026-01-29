@@ -13,7 +13,9 @@ interface SortableNominationCardProps {
   maxRanking: number;
   disabled?: boolean;
   disableDrag?: boolean;
+  isActorCategory?: boolean;
   onRankingChange: (nominationId: number, ranking: number) => void;
+  onRankingClear?: (nominationId: number) => void;
 }
 
 export function SortableNominationCard({
@@ -24,7 +26,9 @@ export function SortableNominationCard({
   maxRanking,
   disabled = false,
   disableDrag = false,
+  isActorCategory = false,
   onRankingChange,
+  onRankingClear,
 }: SortableNominationCardProps) {
   const {
     attributes,
@@ -57,13 +61,23 @@ export function SortableNominationCard({
         maxRanking={maxRanking}
         disabled={disabled}
         onSelect={(newRanking) => onRankingChange(id, newRanking)}
+        onClear={onRankingClear ? () => onRankingClear(id) : undefined}
       />
 
       {/* Movie/Actor info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-medium truncate">{movieName}</h3>
-        {actorName && (
-          <p className="text-sm text-base-content/60 truncate">{actorName}</p>
+        {isActorCategory && actorName ? (
+          <>
+            <h3 className="font-medium truncate">{actorName}</h3>
+            <p className="text-sm text-base-content/60 truncate">{movieName}</p>
+          </>
+        ) : (
+          <>
+            <h3 className="font-medium truncate">{movieName}</h3>
+            {actorName && (
+              <p className="text-sm text-base-content/60 truncate">{actorName}</p>
+            )}
+          </>
         )}
       </div>
 
