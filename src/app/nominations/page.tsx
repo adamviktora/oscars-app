@@ -115,7 +115,7 @@ export default function NominationsPage() {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200, // 200ms hold before drag starts on touch
+        delay: 50, // 50ms hold before drag starts on touch
         tolerance: 5, // 5px movement tolerance during delay
       },
     }),
