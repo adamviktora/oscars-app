@@ -88,7 +88,7 @@ export function SortableNominationCard({
           {...listeners}
           disabled={disabled}
           className={`
-            p-2 rounded-lg transition-colors shrink-0
+            p-2 rounded-lg transition-colors shrink-0 touch-none
             ${
               disabled
                 ? 'cursor-not-allowed opacity-40'
