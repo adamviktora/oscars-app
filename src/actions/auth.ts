@@ -3,8 +3,13 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { REGISTRATION_OPEN } from '@/lib/constants';
 
 export const signUpAction = async (formData: FormData) => {
+  if (!REGISTRATION_OPEN) {
+    throw new Error('Registration is closed');
+  }
+
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   const name = formData.get('name') as string;

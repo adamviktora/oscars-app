@@ -1,3 +1,5 @@
+export const REGISTRATION_OPEN = false;
+
 export const ORDERING_PAGE_LABEL = 'Seřadit TOP filmy';
 
 // Admin emails - only these users can access admin pages

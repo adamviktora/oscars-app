@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signUp } from '@/lib/auth-client';
 import { GoogleSignInButton } from '@/components/google-sign-in-button';
+import Link from 'next/link';
+import { REGISTRATION_OPEN } from '@/lib/constants';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -17,6 +19,24 @@ export default function SignUpPage() {
   const passwordsMatch = password === confirmPassword;
   const showMismatchWarning = confirmPassword.length > 0 && !passwordsMatch;
   const isFormValid = passwordsMatch && password.length > 0 && name.length > 0 && email.length > 0;
+
+  if (!REGISTRATION_OPEN) {
+    return (
+      <div className="max-w-md mx-auto p-6">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body items-center text-center">
+            <h2 className="card-title text-2xl mb-4">Registrace uzavřena</h2>
+            <p className="text-base-content/70 mb-6">
+              Registrace nových uživatelů je momentálně uzavřena. Pokud již máte účet, přihlaste se.
+            </p>
+            <Link href="/signin" className="btn btn-primary w-full">
+              Přihlásit se
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

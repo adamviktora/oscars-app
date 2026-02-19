@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import Link from 'next/link';
-import { isAdmin } from '@/lib/constants';
+import { isAdmin, REGISTRATION_OPEN } from '@/lib/constants';
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -22,9 +22,11 @@ export default async function Home() {
             <Link href="/signin" className="btn btn-outline w-full sm:w-auto">
               Přihlásit se
             </Link>
-            <Link href="/signup" className="btn btn-primary w-full sm:w-auto">
-              Registrovat se
-            </Link>
+            {REGISTRATION_OPEN && (
+              <Link href="/signup" className="btn btn-primary w-full sm:w-auto">
+                Registrovat se
+              </Link>
+            )}
           </div>
         </div>
       </div>

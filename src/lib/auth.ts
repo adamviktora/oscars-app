@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import prisma from './prisma';
 import { nextCookies } from 'better-auth/next-js';
+import { REGISTRATION_OPEN } from './constants';
 
 const getBaseURL = () => {
   if (process.env.BETTER_AUTH_URL) {
@@ -20,11 +21,13 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    disableSignUp: !REGISTRATION_OPEN,
   },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      disableSignUp: !REGISTRATION_OPEN,
     },
   },
   session: {

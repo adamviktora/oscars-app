@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import Link from 'next/link';
 import { ProfileDropdown } from './profile-dropdown';
 import { SidebarMenu } from './sidebar-menu';
+import { REGISTRATION_OPEN } from '@/lib/constants';
 
 export async function Navbar() {
   const session = await auth.api.getSession({
@@ -37,10 +38,12 @@ export async function Navbar() {
                   <span className="hidden sm:inline">Přihlásit se</span>
                   <span className="sm:hidden">Přihlásit</span>
                 </Link>
-                <Link href="/signup" className="btn btn-xs sm:btn-sm bg-gray-900 text-amber-400 hover:bg-gray-800">
-                  <span className="hidden sm:inline">Registrovat se</span>
-                  <span className="sm:hidden">Registrace</span>
-                </Link>
+                {REGISTRATION_OPEN && (
+                  <Link href="/signup" className="btn btn-xs sm:btn-sm bg-gray-900 text-amber-400 hover:bg-gray-800">
+                    <span className="hidden sm:inline">Registrovat se</span>
+                    <span className="sm:hidden">Registrace</span>
+                  </Link>
+                )}
               </>
             )}
           </div>
