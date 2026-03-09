@@ -169,6 +169,24 @@ export function SidebarMenu() {
           </div>
           <ul className="menu px-4 gap-1">
             <li className="menu-title flex flex-row gap-3 py-2 pl-4 text-base-content/70">
+              🏆 <span>Nominační kolo</span>
+            </li>
+            <li>
+              <ul className="ml-4 mt-1 space-y-1">
+                <li>
+                  <Link
+                    href="/vysledky/nominations"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                  >
+                    <span className="text-amber-500">🎬</span>
+                    Tipy účastníků
+                  </Link>
+                </li>
+              </ul>
+            </li>
+
+            <li className="menu-title flex flex-row gap-3 py-2 pl-4 text-base-content/70">
               🎬 <span>Prenominační kolo</span>
             </li>
             <li>

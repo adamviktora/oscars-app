@@ -34,7 +34,7 @@ export async function Navbar() {
               />
             ) : (
               <>
-                <Link href="/signin" className="btn btn-ghost btn-xs sm:btn-sm text-gray-900 hover:bg-amber-300 hover:text-gray-900">
+                <Link href="/signin" className="btn btn-xs sm:btn-sm bg-gray-900 text-amber-400 hover:bg-gray-800">
                   <span className="hidden sm:inline">Přihlásit se</span>
                   <span className="sm:hidden">Přihlásit</span>
                 </Link>

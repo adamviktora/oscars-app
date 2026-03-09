@@ -1,28 +1,6 @@
 import prisma from '@/lib/prisma';
+import { calculatePrize } from '@/lib/prenom2';
 import { Prenom2StatsClient } from './client';
-
-// Prize calculation based on correct guesses and shortlist size
-function calculatePrize(correctGuesses: number, shortlistSize: number): number {
-  if (correctGuesses === 5) {
-    if (shortlistSize <= 10) return 10;
-    if (shortlistSize <= 16) return 13;
-    return 17;
-  }
-  if (correctGuesses === 4) {
-    if (shortlistSize <= 10) return 5;
-    if (shortlistSize <= 16) return 6;
-    return 8;
-  }
-  if (correctGuesses === 3) {
-    if (shortlistSize <= 10) return 2;
-    if (shortlistSize <= 16) return 3;
-    return 4;
-  }
-  if (correctGuesses === 2) {
-    if (shortlistSize >= 20) return 1;
-  }
-  return 0;
-}
 
 // Max prize possible for a category
 function getMaxPrize(shortlistSize: number): number {

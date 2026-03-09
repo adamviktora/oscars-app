@@ -49,8 +49,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use a transaction to upsert all rankings
+    const submittedNominationIds = rankings.map((r) => r.nominationId);
+
     await prisma.$transaction(async (tx) => {
+      // Delete rankings that were cleared by the user
+      if (submittedNominationIds.length > 0) {
+        await tx.userNominationRanking.deleteMany({
+          where: {
+            userId,
+            nominationId: { notIn: submittedNominationIds },
+          },
+        });
+      } else {
+        await tx.userNominationRanking.deleteMany({
+          where: { userId },
+        });
+      }
+
       for (const item of rankings) {
         await tx.userNominationRanking.upsert({
           where: {

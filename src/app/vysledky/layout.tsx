@@ -26,6 +26,14 @@ export default async function VysledkyLayout({
             <span className="text-xl">📊</span>
             <h2 className="font-semibold text-lg">Výsledky</h2>
             <nav className="flex items-center gap-2 ml-4 flex-wrap">
+              {/* Nomination round group */}
+              <div className="flex items-center gap-1 bg-base-200 rounded-lg px-2 py-1">
+                <span className="text-xs text-base-content/50 mr-1">Nominační:</span>
+                <Link href="/vysledky/nominations" className="btn btn-ghost btn-xs">
+                  Tipy účastníků
+                </Link>
+              </div>
+
               {/* Prenom 1 group */}
               <div className="flex items-center gap-1 bg-base-200 rounded-lg px-2 py-1">
                 <span className="text-xs text-base-content/50 mr-1">Prenominační:</span>

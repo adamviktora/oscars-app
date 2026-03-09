@@ -41,7 +41,7 @@ export default async function Home() {
         <h2 className="text-2xl font-bold mb-4">Vítej, {session.user.name}!</h2>
 
         {/* Nomination round - main CTA */}
-        <div className="mb-8 p-6 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30">
+        <div className="mb-8 p-6 bg-linear-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30">
           <h3 className="text-xl font-bold mb-3 flex items-center justify-center gap-2">
             🏆 Nominační kolo
           </h3>
@@ -69,6 +69,13 @@ export default async function Home() {
             </div>
           </div>
         )}
+
+        <h3 className="text-lg font-bold mb-4 mt-6">Nominační kolo</h3>
+        <div className="flex flex-col gap-3 items-center">
+          <Link href="/vysledky/nominations" className="btn btn-warning btn-outline">
+            Tipy účastníků
+          </Link>
+        </div>
 
         <h3 className="text-lg font-bold mb-4 mt-6">Prenominační kolo</h3>
         <div className="flex flex-col gap-3 items-center">
