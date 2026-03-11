@@ -45,12 +45,14 @@ interface Props {
   users: UserData[];
   categories: CategoryInfo[];
   viewerFinalized: boolean;
+  viewerIsAdmin: boolean;
 }
 
 export function NominationResultsClient({
   users,
   categories,
   viewerFinalized,
+  viewerIsAdmin,
 }: Props) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(
     users[0]?.id ?? null
@@ -61,7 +63,7 @@ export function NominationResultsClient({
   const categoryMap = new Map(categories.map((c) => [c.categoryId, c]));
 
   const canShowDetails = (user: UserData) =>
-    user.finalSubmitted && viewerFinalized;
+    user.finalSubmitted && (viewerFinalized || viewerIsAdmin);
 
   return (
     <div>

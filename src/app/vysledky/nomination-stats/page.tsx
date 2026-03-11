@@ -199,8 +199,9 @@ export default async function NominationStatsPage() {
   });
 
   // === Celková šance filmů data ===
+  // Keyed by resolved movie name (songs stripped of " – SongTitle" suffix)
   const movieAggregates = new Map<
-    number,
+    string,
     {
       movieName: string;
       totalCash: number;
@@ -214,8 +215,15 @@ export default async function NominationStatsPage() {
     const cashTier = NOMINATION_CASH[cat.slug];
     const maxRanking = cat.slug === 'best-picture' ? 10 : 5;
     const categoryFirstPlaceCash = cashTier ? cashTier[0] : 0;
+    const isSong = cat.slug === 'song';
 
     for (const nom of cat.nominations) {
+      let resolvedName = nom.movie.name;
+      if (isSong) {
+        const sep = resolvedName.indexOf(' \u2013 ');
+        if (sep !== -1) resolvedName = resolvedName.substring(0, sep);
+      }
+
       const userRankings = rankingsByNomination.get(nom.id) || [];
       let nomCash = 0;
       for (const ranking of userRankings) {
@@ -224,7 +232,7 @@ export default async function NominationStatsPage() {
         }
       }
 
-      const existing = movieAggregates.get(nom.movieId);
+      const existing = movieAggregates.get(resolvedName);
       if (existing) {
         existing.totalCash += nomCash;
         existing.nominationCount++;
@@ -232,10 +240,12 @@ export default async function NominationStatsPage() {
           existing.lowestCategoryTier,
           categoryFirstPlaceCash
         );
-        existing.categories.push(cat.name);
+        if (!existing.categories.includes(cat.name)) {
+          existing.categories.push(cat.name);
+        }
       } else {
-        movieAggregates.set(nom.movieId, {
-          movieName: nom.movie.name,
+        movieAggregates.set(resolvedName, {
+          movieName: resolvedName,
           totalCash: nomCash,
           nominationCount: 1,
           lowestCategoryTier: categoryFirstPlaceCash,

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { isAdmin } from '@/lib/constants';
 import { calculatePrize } from '@/lib/prenom2';
+import { NOMINATION_CASH } from '@/lib/nomination-cash';
 import { getPrenom1PositionMap } from '@/lib/prenom1';
 import { NominationResultsClient } from './client';
 
@@ -161,6 +162,43 @@ export default async function NominationResultsPage() {
     (c) => c.slug === 'song'
   )?.categoryId;
 
+  const movieNominationInfo = new Map<
+    string,
+    {
+      isNominatedForBestPicture: boolean;
+      nominationCount: number;
+      highestCategoryCash: number;
+    }
+  >();
+  for (const cat of sortedCategories) {
+    const cashTier = NOMINATION_CASH[cat.slug];
+    const firstPlaceCash = cashTier ? cashTier[0] : 0;
+    const isBestPicture = cat.slug === 'best-picture';
+    const isSong = cat.slug === 'song';
+    for (const nom of cat.nominations) {
+      let resolvedName = nom.movie.name;
+      if (isSong) {
+        const sep = resolvedName.indexOf(' \u2013 ');
+        if (sep !== -1) resolvedName = resolvedName.substring(0, sep);
+      }
+      const existing = movieNominationInfo.get(resolvedName);
+      if (existing) {
+        if (isBestPicture) existing.isNominatedForBestPicture = true;
+        existing.nominationCount++;
+        existing.highestCategoryCash = Math.max(
+          existing.highestCategoryCash,
+          firstPlaceCash
+        );
+      } else {
+        movieNominationInfo.set(resolvedName, {
+          isNominatedForBestPicture: isBestPicture,
+          nominationCount: 1,
+          highestCategoryCash: firstPlaceCash,
+        });
+      }
+    }
+  }
+
   const usersData = users.map((user) => {
     // --- Nomination rankings ---
     const rankingsByCategory = new Map<
@@ -207,10 +245,21 @@ export default async function NominationResultsPage() {
 
     const firstPlaceMovies = Array.from(firstPlaceCounts.entries())
       .map(([movieName, count]) => ({ movieName, count }))
-      .sort(
-        (a, b) =>
-          b.count - a.count || a.movieName.localeCompare(b.movieName, 'cs')
-      );
+      .sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        const aInfo = movieNominationInfo.get(a.movieName);
+        const bInfo = movieNominationInfo.get(b.movieName);
+        const aBP = aInfo?.isNominatedForBestPicture ? 1 : 0;
+        const bBP = bInfo?.isNominatedForBestPicture ? 1 : 0;
+        if (bBP !== aBP) return bBP - aBP;
+        const aNom = aInfo?.nominationCount ?? 0;
+        const bNom = bInfo?.nominationCount ?? 0;
+        if (bNom !== aNom) return bNom - aNom;
+        const aCash = aInfo?.highestCategoryCash ?? 0;
+        const bCash = bInfo?.highestCategoryCash ?? 0;
+        if (bCash !== aCash) return bCash - aCash;
+        return a.movieName.localeCompare(b.movieName, 'cs');
+      });
 
     const uniqueAwardedMovies = firstPlaceCounts.size;
 
@@ -269,6 +318,7 @@ export default async function NominationResultsPage() {
       users={usersData}
       categories={categoriesData}
       viewerFinalized={currentUser?.nominationFinalSubmitted ?? false}
+      viewerIsAdmin={isAdmin(currentUser?.email)}
     />
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Trophy } from 'lucide-react';
 
 interface MovieAssessment {
   movieName: string;
@@ -148,6 +148,12 @@ export function NominationStatsClient({
                                   <span>{movie.movieName}</span>
                                 )}
                               </span>
+                              {movie.placementCounts[0] > 0 && (
+                                <span className="badge badge-sm bg-base-300 text-base-content/70 border-base-300 gap-0.5 font-mono shrink-0">
+                                  {movie.placementCounts[0]}
+                                  <Trophy className="w-3 h-3 ml-1" />
+                                </span>
+                              )}
                               <span className="badge badge-sm badge-neutral font-mono shrink-0">
                                 {movie.totalCash} Kč
                               </span>
@@ -264,7 +270,10 @@ export function NominationStatsClient({
                     {cat.matchingGroups.length > 0 ? (
                       <ul className="space-y-1.5">
                         {cat.matchingGroups.map((group, idx) => (
-                          <li key={idx} className="text-sm flex items-start gap-2">
+                          <li
+                            key={idx}
+                            className="text-sm flex items-start gap-2"
+                          >
                             <span className="badge badge-sm badge-success shrink-0 mt-0.5">
                               {group.length}×
                             </span>
