@@ -32,6 +32,7 @@ interface UserData {
   id: string;
   name: string;
   finalSubmitted: boolean;
+  prenom1Position: number | null;
   completeCategories: number;
   totalCategories: number;
   prenom2Bonus: number;
@@ -44,14 +45,12 @@ interface Props {
   users: UserData[];
   categories: CategoryInfo[];
   viewerFinalized: boolean;
-  viewerIsAdmin: boolean;
 }
 
 export function NominationResultsClient({
   users,
   categories,
   viewerFinalized,
-  viewerIsAdmin,
 }: Props) {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(
     users[0]?.id ?? null
@@ -62,7 +61,7 @@ export function NominationResultsClient({
   const categoryMap = new Map(categories.map((c) => [c.categoryId, c]));
 
   const canShowDetails = (user: UserData) =>
-    viewerFinalized && (viewerIsAdmin || user.finalSubmitted);
+    user.finalSubmitted && viewerFinalized;
 
   return (
     <div>
@@ -84,6 +83,11 @@ export function NominationResultsClient({
                     }`}
                   >
                     <div className="flex items-center gap-2 w-full">
+                      {user.prenom1Position != null && (
+                        <span className="badge badge-sm badge-neutral font-mono">
+                          R{user.prenom1Position}
+                        </span>
+                      )}
                       <span className="font-medium flex-1">{user.name}</span>
                       {user.finalSubmitted && (
                         <Check className="w-4 h-4 text-green-500" />

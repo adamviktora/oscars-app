@@ -18,10 +18,12 @@ STATISTIKY
   - speciální stránka = průměrný tip všech účastníků = podle Kč
   - seřadit filmy podle tipnutých Kč (sloupec sumy Kč)
 
-- Absolutní shody v seřazení (+ objektivita)
-- absoutní shoda s celkovým posudkem (+ objektivita)
-- ojedinělé tipy (na 1. místo)
-- odklonění se od celkového posudku (10 většina, 3 menšina) kdo je v menšině tak (- objektivita)
+Podle kategorií (vždy vypsat kategorii a vedle ní kteří respondenti mají shodu)
+- absolutní shody mezi jednotlivými respondenty v umisťování v daných kategoriích - stejných 1-5 (1-10)  (+ objektivita)
+- absolutní shoda s celkovým posudkem (+ objektivita)
+- ojedinělé tipy na 1. místo - tzn. nikdo jiný na 1. místo ten film v dané kategorii nedal (+ subjektivita)
+
+- odklonění se od vysoce preferovaných tipů (celkového posudku) (10 většina, 3 menšina) kdo je v menšině tak (- objektivita)
 - shody s ostatními + s posudkem
 - naprostá shoda v nějaké kategorii (1. místa) od všech účastníků až po 7 shod
 - těsné souboje dvou filmů (5 vs 5 apod.)

@@ -32,6 +32,9 @@ export default async function VysledkyLayout({
                 <Link href="/vysledky/nominations" className="btn btn-ghost btn-xs">
                   Tipy účastníků
                 </Link>
+                <Link href="/vysledky/nomination-stats" className="btn btn-ghost btn-xs">
+                  Statistiky
+                </Link>
               </div>
 
               {/* Prenom 1 group */}

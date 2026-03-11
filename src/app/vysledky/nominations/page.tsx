@@ -3,29 +3,54 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { isAdmin } from '@/lib/constants';
 import { calculatePrize } from '@/lib/prenom2';
+import { getPrenom1PositionMap } from '@/lib/prenom1';
 import { NominationResultsClient } from './client';
 
 const CATEGORY_ORDER = [
-  'best-picture', 'director', 'actor', 'actress', 'supporting-actor', 'supporting-actress',
-  'casting', 'original-screenplay', 'adapted-screenplay', 'camera', 'film-editing',
-  'music', 'song', 'production-design', 'costume-design', 'makeup', 'sound',
-  'visual-effects', 'international', 'animated-feature', 'documentary',
-  'short-live-action', 'short-animated', 'short-documentary',
+  'best-picture',
+  'director',
+  'actor',
+  'actress',
+  'supporting-actor',
+  'supporting-actress',
+  'casting',
+  'original-screenplay',
+  'adapted-screenplay',
+  'camera',
+  'film-editing',
+  'music',
+  'song',
+  'production-design',
+  'costume-design',
+  'makeup',
+  'sound',
+  'visual-effects',
+  'international',
+  'animated-feature',
+  'documentary',
+  'short-live-action',
+  'short-animated',
+  'short-documentary',
 ];
 
-const ACTOR_CATEGORIES = new Set(['actor', 'actress', 'supporting-actor', 'supporting-actress']);
+const ACTOR_CATEGORIES = new Set([
+  'actor',
+  'actress',
+  'supporting-actor',
+  'supporting-actress',
+]);
 
 export default async function NominationResultsPage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  const currentUser = session ? await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { nominationFinalSubmitted: true, email: true },
-  }) : null;
-
-  const viewerIsAdmin = isAdmin(currentUser?.email);
+  const currentUser = session
+    ? await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { nominationFinalSubmitted: true, email: true },
+      })
+    : null;
 
   // Fetch nomination categories sorted by CATEGORY_ORDER
   const categories = await prisma.category.findMany({
@@ -78,12 +103,13 @@ export default async function NominationResultsPage() {
     ])
   );
 
+  const prenom1PositionMap = await getPrenom1PositionMap();
+
   // Fetch all users with nomination rankings + prenom2 selections
   const users = await prisma.user.findMany({
     where: {
       email: { not: 'robinzon@skaut.cz' },
     },
-    orderBy: { name: 'asc' },
     select: {
       id: true,
       name: true,
@@ -105,11 +131,14 @@ export default async function NominationResultsPage() {
   });
 
   // Build nomination lookup
-  const nominationLookup = new Map<number, {
-    movieName: string;
-    actorName: string | null;
-    categoryId: number;
-  }>();
+  const nominationLookup = new Map<
+    number,
+    {
+      movieName: string;
+      actorName: string | null;
+      categoryId: number;
+    }
+  >();
   for (const cat of sortedCategories) {
     for (const nom of cat.nominations) {
       nominationLookup.set(nom.id, {
@@ -128,9 +157,16 @@ export default async function NominationResultsPage() {
     maxRanking: cat.slug === 'best-picture' ? 10 : 5,
   }));
 
+  const songCategoryId = categoriesData.find(
+    (c) => c.slug === 'song'
+  )?.categoryId;
+
   const usersData = users.map((user) => {
     // --- Nomination rankings ---
-    const rankingsByCategory = new Map<number, { ranking: number; movieName: string; actorName: string | null }[]>();
+    const rankingsByCategory = new Map<
+      number,
+      { ranking: number; movieName: string; actorName: string | null }[]
+    >();
 
     for (const r of user.nominationRankings) {
       const nom = nominationLookup.get(r.nominationId);
@@ -158,12 +194,23 @@ export default async function NominationResultsPage() {
       if (r.ranking !== 1) continue;
       const nom = nominationLookup.get(r.nominationId);
       if (!nom) continue;
-      firstPlaceCounts.set(nom.movieName, (firstPlaceCounts.get(nom.movieName) || 0) + 1);
+      let movieName = nom.movieName;
+      if (songCategoryId != null && nom.categoryId === songCategoryId) {
+        const sep = movieName.indexOf(' \u2013 ');
+        if (sep !== -1) movieName = movieName.substring(0, sep);
+      }
+      firstPlaceCounts.set(
+        movieName,
+        (firstPlaceCounts.get(movieName) || 0) + 1
+      );
     }
 
     const firstPlaceMovies = Array.from(firstPlaceCounts.entries())
       .map(([movieName, count]) => ({ movieName, count }))
-      .sort((a, b) => b.count - a.count || a.movieName.localeCompare(b.movieName, 'cs'));
+      .sort(
+        (a, b) =>
+          b.count - a.count || a.movieName.localeCompare(b.movieName, 'cs')
+      );
 
     const uniqueAwardedMovies = firstPlaceCounts.size;
 
@@ -179,7 +226,9 @@ export default async function NominationResultsPage() {
     for (const [catId, info] of prenom2CategoryInfo) {
       const movieIds = selectionsByPrenom2Cat.get(catId) || [];
       if (movieIds.length !== 5) continue;
-      const correctCount = movieIds.filter((id) => info.nominatedMovieIds.has(id)).length;
+      const correctCount = movieIds.filter((id) =>
+        info.nominatedMovieIds.has(id)
+      ).length;
       prenom2Bonus += calculatePrize(correctCount, info.shortlistSize);
     }
 
@@ -187,6 +236,7 @@ export default async function NominationResultsPage() {
       id: user.id,
       name: user.name,
       finalSubmitted: user.nominationFinalSubmitted,
+      prenom1Position: prenom1PositionMap.get(user.id) ?? null,
       completeCategories,
       totalCategories: categoriesData.length,
       prenom2Bonus,
@@ -208,12 +258,17 @@ export default async function NominationResultsPage() {
     };
   });
 
+  usersData.sort((a, b) => {
+    const posA = a.prenom1Position ?? Infinity;
+    const posB = b.prenom1Position ?? Infinity;
+    return posA - posB;
+  });
+
   return (
     <NominationResultsClient
       users={usersData}
       categories={categoriesData}
       viewerFinalized={currentUser?.nominationFinalSubmitted ?? false}
-      viewerIsAdmin={viewerIsAdmin}
     />
   );
 }

@@ -183,6 +183,16 @@ export function SidebarMenu() {
                     Tipy účastníků
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/vysledky/nomination-stats"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-2 px-4 rounded-lg hover:bg-base-200 text-sm"
+                  >
+                    <span>📊</span>
+                    Statistiky
+                  </Link>
+                </li>
               </ul>
             </li>
 

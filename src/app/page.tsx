@@ -72,6 +72,9 @@ export default async function Home() {
 
         <h3 className="text-lg font-bold mb-4 mt-6">Nominační kolo</h3>
         <div className="flex flex-col gap-3 items-center">
+          <Link href="/vysledky/nomination-stats" className="btn btn-warning btn-outline">
+            Statistiky
+          </Link>
           <Link href="/vysledky/nominations" className="btn btn-warning btn-outline">
             Tipy účastníků
           </Link>
