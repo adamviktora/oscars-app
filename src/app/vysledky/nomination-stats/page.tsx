@@ -337,36 +337,34 @@ export default async function NominationStatsPage() {
     catMap.set(r.nominationId, r.ranking);
   }
 
-  // Consensus groups per category (nominations grouped by equal total cash)
-  const consensusByCategory = new Map<
-    string,
-    { nomIds: Set<number>; cash: number }[]
-  >();
+  // Exact consensus order per category (same sort as Celkový posudek: cash, then placementCounts tiebreaker)
+  const consensusOrderByCategory = new Map<string, number[]>();
   for (const cat of sortedCategories) {
     const cashTier = NOMINATION_CASH[cat.slug];
     const maxRanking = cat.slug === 'best-picture' ? 10 : 5;
-    const nomCashList: { nomId: number; cash: number }[] = [];
+    const nomDataList: { nomId: number; cash: number; placementCounts: number[] }[] = [];
     for (const nom of cat.nominations) {
       const allRanks = rankingsByNomination.get(nom.id) || [];
       let totalCash = 0;
+      const placementCounts = new Array(maxRanking).fill(0) as number[];
       for (const rank of allRanks) {
         if (cashTier && rank >= 1 && rank <= maxRanking) {
           totalCash += cashTier[rank - 1];
+          placementCounts[rank - 1]++;
         }
       }
-      nomCashList.push({ nomId: nom.id, cash: totalCash });
+      nomDataList.push({ nomId: nom.id, cash: totalCash, placementCounts });
     }
-    nomCashList.sort((a, b) => b.cash - a.cash);
-
-    const groups: { nomIds: Set<number>; cash: number }[] = [];
-    for (const item of nomCashList) {
-      if (groups.length > 0 && groups[groups.length - 1].cash === item.cash) {
-        groups[groups.length - 1].nomIds.add(item.nomId);
-      } else {
-        groups.push({ nomIds: new Set([item.nomId]), cash: item.cash });
+    nomDataList.sort((a, b) => {
+      if (b.cash !== a.cash) return b.cash - a.cash;
+      for (let i = 0; i < a.placementCounts.length; i++) {
+        if (b.placementCounts[i] !== a.placementCounts[i]) {
+          return b.placementCounts[i] - a.placementCounts[i];
+        }
       }
-    }
-    consensusByCategory.set(cat.slug, groups);
+      return 0;
+    });
+    consensusOrderByCategory.set(cat.slug, nomDataList.map(n => n.nomId));
   }
 
   const finalizedUserIdArr = [...finalizedUserIds];
@@ -456,8 +454,8 @@ export default async function NominationStatsPage() {
       .sort((a, b) => b.length - a.length)
       .map((group) => group.map((uid) => userNameMap.get(uid) ?? uid));
 
-    // 2. Consensus match (respecting ties)
-    const consensusGroups = consensusByCategory.get(cat.slug) ?? [];
+    // 2. Consensus match (exact order — must match posudek position-by-position)
+    const consensusOrder = consensusOrderByCategory.get(cat.slug) ?? [];
     const consensusMatchers: string[] = [];
     for (const userId of finalizedUserIdArr) {
       const catRanks = userCatRankMap.get(userId)?.get(cat.slug);
@@ -473,19 +471,12 @@ export default async function NominationStatsPage() {
       }
 
       let matches = true;
-      let pos = 1;
-      for (const group of consensusGroups) {
-        if (pos > maxRanking) break;
-        const groupEnd = Math.min(pos + group.nomIds.size - 1, maxRanking);
-        for (let p = pos; p <= groupEnd; p++) {
-          const userNom = userPosToNom.get(p);
-          if (!userNom || !group.nomIds.has(userNom)) {
-            matches = false;
-            break;
-          }
+      for (let p = 1; p <= maxRanking; p++) {
+        const userNom = userPosToNom.get(p);
+        if (!userNom || userNom !== consensusOrder[p - 1]) {
+          matches = false;
+          break;
         }
-        if (!matches) break;
-        pos = groupEnd + 1;
       }
 
       if (matches) {
