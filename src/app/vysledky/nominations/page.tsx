@@ -3,7 +3,6 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { isAdmin } from '@/lib/constants';
 import { calculatePrize } from '@/lib/prenom2';
-import { NOMINATION_CASH } from '@/lib/nomination-cash';
 import { getPrenom1PositionMap } from '@/lib/prenom1';
 import { NominationResultsClient } from './client';
 
@@ -167,14 +166,13 @@ export default async function NominationResultsPage() {
     {
       isNominatedForBestPicture: boolean;
       nominationCount: number;
-      highestCategoryCash: number;
+      bestCategoryOrder: number;
     }
   >();
   for (const cat of sortedCategories) {
-    const cashTier = NOMINATION_CASH[cat.slug];
-    const firstPlaceCash = cashTier ? cashTier[0] : 0;
     const isBestPicture = cat.slug === 'best-picture';
     const isSong = cat.slug === 'song';
+    const catOrder = CATEGORY_ORDER.indexOf(cat.slug);
     for (const nom of cat.nominations) {
       let resolvedName = nom.movie.name;
       if (isSong) {
@@ -185,15 +183,15 @@ export default async function NominationResultsPage() {
       if (existing) {
         if (isBestPicture) existing.isNominatedForBestPicture = true;
         existing.nominationCount++;
-        existing.highestCategoryCash = Math.max(
-          existing.highestCategoryCash,
-          firstPlaceCash
+        existing.bestCategoryOrder = Math.min(
+          existing.bestCategoryOrder,
+          catOrder
         );
       } else {
         movieNominationInfo.set(resolvedName, {
           isNominatedForBestPicture: isBestPicture,
           nominationCount: 1,
-          highestCategoryCash: firstPlaceCash,
+          bestCategoryOrder: catOrder,
         });
       }
     }
@@ -255,9 +253,9 @@ export default async function NominationResultsPage() {
         const aNom = aInfo?.nominationCount ?? 0;
         const bNom = bInfo?.nominationCount ?? 0;
         if (bNom !== aNom) return bNom - aNom;
-        const aCash = aInfo?.highestCategoryCash ?? 0;
-        const bCash = bInfo?.highestCategoryCash ?? 0;
-        if (bCash !== aCash) return bCash - aCash;
+        const aOrder = aInfo?.bestCategoryOrder ?? Infinity;
+        const bOrder = bInfo?.bestCategoryOrder ?? Infinity;
+        if (aOrder !== bOrder) return aOrder - bOrder;
         return a.movieName.localeCompare(b.movieName, 'cs');
       });
 

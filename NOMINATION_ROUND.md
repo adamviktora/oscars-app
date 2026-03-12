@@ -23,10 +23,10 @@ Podle kategorií (vždy vypsat kategorii a vedle ní kteří respondenti mají s
 - absolutní shoda s celkovým posudkem (+ objektivita)
 - ojedinělé tipy na 1. místo - tzn. nikdo jiný na 1. místo ten film v dané kategorii nedal (+ subjektivita)
 
-- odklonění se od vysoce preferovaných tipů (celkového posudku) (10 většina, 3 menšina) kdo je v menšině tak (- objektivita)
+- odklonění se od vysoce preferovaných tipů (celkového posudku) (10 většina) kdo je v menšině tak (- objektivita)
 - shody s ostatními + s posudkem
 - naprostá shoda v nějaké kategorii (1. místa) od všech účastníků až po 7 shod
-- těsné souboje dvou filmů (5 vs 5 apod.)
+- těsné souboje dvou filmů (5 vs 5, 5 v 6, 6 v 6, 6 v 7)
 
 - (když všichni dají něco na stejné místo)
 

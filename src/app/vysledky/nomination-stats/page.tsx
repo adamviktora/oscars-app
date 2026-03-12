@@ -371,9 +371,59 @@ export default async function NominationStatsPage() {
 
   const finalizedUserIdArr = [...finalizedUserIds];
 
+  // Per-user objectivity score accumulators
+  const userObjScores = new Map<
+    string,
+    { consensus: number; matching: number; divergence: number; unique: number }
+  >();
+  for (const uid of finalizedUserIdArr) {
+    userObjScores.set(uid, { consensus: 0, matching: 0, divergence: 0, unique: 0 });
+  }
+
+  const firstPlaceAgreement: {
+    categoryName: string;
+    slug: string;
+    movieName: string;
+    count: number;
+  }[] = [];
+
+  const closeBattles: {
+    categoryName: string;
+    slug: string;
+    movieA: string;
+    countA: number;
+    movieB: string;
+    countB: number;
+  }[] = [];
+
+  const majorityDivergence: {
+    categoryName: string;
+    slug: string;
+    majorityMovie: string;
+    majorityCount: number;
+    divergers: { userName: string; pickedMovie: string }[];
+  }[] = [];
+
+  const unanimousPlacements: {
+    categoryName: string;
+    slug: string;
+    movieName: string;
+    position: number;
+    agreedCount: number;
+    totalCount: number;
+  }[] = [];
+
   const objectivityCategories = sortedCategories.map((cat) => {
     const maxRanking = cat.slug === 'best-picture' ? 10 : 5;
     const isActorCategory = ACTOR_CATEGORIES.has(cat.slug);
+
+    const resolveDisplay = (nomId: number) => {
+      const info = nominationInfoMap.get(nomId);
+      if (!info) return '?';
+      return isActorCategory && info.actorName
+        ? `${info.actorName} — ${info.movieName}`
+        : info.movieName;
+    };
 
     // 1. User-user matches: group users with identical complete ranking vectors
     const vectorGroups = new Map<string, string[]>();
@@ -392,14 +442,21 @@ export default async function NominationStatsPage() {
       vectorGroups.get(key)!.push(userId);
     }
 
-    const matchingGroups = [...vectorGroups.values()]
-      .filter((group) => group.length > 1)
+    const matchingGroupsRaw = [...vectorGroups.values()].filter(
+      (group) => group.length > 1
+    );
+    // +matching score for users in any matching group
+    for (const group of matchingGroupsRaw) {
+      for (const uid of group) {
+        const s = userObjScores.get(uid);
+        if (s) s.matching++;
+      }
+    }
+    const matchingGroups = matchingGroupsRaw
       .sort((a, b) => b.length - a.length)
-      .map((group) =>
-        group.map((uid) => userNameMap.get(uid) ?? uid)
-      );
+      .map((group) => group.map((uid) => userNameMap.get(uid) ?? uid));
 
-    // 2. Consensus match (respecting ties — tied nominations are interchangeable)
+    // 2. Consensus match (respecting ties)
     const consensusGroups = consensusByCategory.get(cat.slug) ?? [];
     const consensusMatchers: string[] = [];
     for (const userId of finalizedUserIdArr) {
@@ -419,10 +476,7 @@ export default async function NominationStatsPage() {
       let pos = 1;
       for (const group of consensusGroups) {
         if (pos > maxRanking) break;
-        const groupEnd = Math.min(
-          pos + group.nomIds.size - 1,
-          maxRanking
-        );
+        const groupEnd = Math.min(pos + group.nomIds.size - 1, maxRanking);
         for (let p = pos; p <= groupEnd; p++) {
           const userNom = userPosToNom.get(p);
           if (!userNom || !group.nomIds.has(userNom)) {
@@ -436,11 +490,13 @@ export default async function NominationStatsPage() {
 
       if (matches) {
         consensusMatchers.push(userNameMap.get(userId) ?? userId);
+        const s = userObjScores.get(userId);
+        if (s) s.consensus++;
       }
     }
     consensusMatchers.sort((a, b) => a.localeCompare(b, 'cs'));
 
-    // 3. Unique first-place picks (only one user picked this nomination at #1)
+    // 3. First-place pickers per nomination
     const firstPlacePickers = new Map<number, string[]>();
     for (const userId of finalizedUserIdArr) {
       const catRanks = userCatRankMap.get(userId)?.get(cat.slug);
@@ -453,22 +509,120 @@ export default async function NominationStatsPage() {
       }
     }
 
-    const uniqueFirstPlaces: {
-      displayName: string;
-      userName: string;
-    }[] = [];
+    // Unique first-place picks (only one user) + score
+    const uniqueFirstPlaces: { displayName: string; userName: string }[] = [];
     for (const [nomId, pickers] of firstPlacePickers) {
       if (pickers.length !== 1) continue;
-      const info = nominationInfoMap.get(nomId);
-      if (!info) continue;
-      const displayName =
-        isActorCategory && info.actorName
-          ? `${info.actorName} — ${info.movieName}`
-          : info.movieName;
       uniqueFirstPlaces.push({
-        displayName,
+        displayName: resolveDisplay(nomId),
         userName: userNameMap.get(pickers[0]) ?? pickers[0],
       });
+      const s = userObjScores.get(pickers[0]);
+      if (s) s.unique++;
+    }
+
+    // First-place vote counts sorted desc
+    const fpCounts = [...firstPlacePickers.entries()]
+      .map(([nomId, pickers]) => ({
+        nomId,
+        displayName: resolveDisplay(nomId),
+        count: pickers.length,
+        pickers,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    // 4. First-place agreement (>= 7)
+    if (fpCounts.length > 0 && fpCounts[0].count >= 7) {
+      firstPlaceAgreement.push({
+        categoryName: cat.name,
+        slug: cat.slug,
+        movieName: fpCounts[0].displayName,
+        count: fpCounts[0].count,
+      });
+    }
+
+    // 5. Close battles (top two both >= 5)
+    if (fpCounts.length >= 2 && fpCounts[0].count >= 5 && fpCounts[1].count >= 5) {
+      closeBattles.push({
+        categoryName: cat.name,
+        slug: cat.slug,
+        movieA: fpCounts[0].displayName,
+        countA: fpCounts[0].count,
+        movieB: fpCounts[1].displayName,
+        countB: fpCounts[1].count,
+      });
+    }
+
+    // 6. Majority divergence (top pick >= 10)
+    if (fpCounts.length > 0 && fpCounts[0].count >= 10) {
+      const majorityNomId = fpCounts[0].nomId;
+      const majorityPickers = new Set(fpCounts[0].pickers);
+      const divergers: { userName: string; pickedMovie: string }[] = [];
+      for (const fp of fpCounts) {
+        if (fp.nomId === majorityNomId) continue;
+        for (const uid of fp.pickers) {
+          divergers.push({
+            userName: userNameMap.get(uid) ?? uid,
+            pickedMovie: fp.displayName,
+          });
+          const s = userObjScores.get(uid);
+          if (s) s.divergence++;
+        }
+      }
+      // Also count users who didn't rank this category at all or didn't pick #1
+      for (const uid of finalizedUserIdArr) {
+        if (majorityPickers.has(uid)) continue;
+        const alreadyListed = divergers.some((d) => d.userName === (userNameMap.get(uid) ?? uid));
+        if (!alreadyListed) {
+          divergers.push({
+            userName: userNameMap.get(uid) ?? uid,
+            pickedMovie: '(bez tipu)',
+          });
+          const s = userObjScores.get(uid);
+          if (s) s.divergence++;
+        }
+      }
+      majorityDivergence.push({
+        categoryName: cat.name,
+        slug: cat.slug,
+        majorityMovie: fpCounts[0].displayName,
+        majorityCount: fpCounts[0].count,
+        divergers,
+      });
+    }
+
+    // 7. (Near-)unanimous placements: most common position per nomination, threshold N-3
+    const minAgreed = Math.max(finalizedUserIdArr.length - 3, 1);
+    for (const nom of cat.nominations) {
+      const positionCounts = new Map<number, number>();
+      let totalRanked = 0;
+      for (const uid of finalizedUserIdArr) {
+        const catRanks = userCatRankMap.get(uid)?.get(cat.slug);
+        if (!catRanks) continue;
+        const rank = catRanks.get(nom.id);
+        if (rank === undefined || rank < 1 || rank > maxRanking) continue;
+        totalRanked++;
+        positionCounts.set(rank, (positionCounts.get(rank) || 0) + 1);
+      }
+      if (totalRanked < minAgreed) continue;
+      let bestPos = 0;
+      let bestCount = 0;
+      for (const [pos, count] of positionCounts) {
+        if (count > bestCount) {
+          bestCount = count;
+          bestPos = pos;
+        }
+      }
+      if (bestCount >= minAgreed) {
+        unanimousPlacements.push({
+          categoryName: cat.name,
+          slug: cat.slug,
+          movieName: resolveDisplay(nom.id),
+          position: bestPos,
+          agreedCount: bestCount,
+          totalCount: totalRanked,
+        });
+      }
     }
 
     return {
@@ -482,11 +636,33 @@ export default async function NominationStatsPage() {
     };
   });
 
+  firstPlaceAgreement.sort((a, b) => b.count - a.count);
+  unanimousPlacements.sort((a, b) => b.agreedCount - a.agreedCount || a.position - b.position);
+
+  const objectivityRanking = finalizedUserIdArr
+    .map((uid) => {
+      const s = userObjScores.get(uid)!;
+      return {
+        userName: userNameMap.get(uid) ?? uid,
+        score: s.consensus + s.matching - s.divergence - s.unique,
+        plusConsensus: s.consensus,
+        plusMatching: s.matching,
+        minusDivergence: s.divergence,
+        minusUnique: s.unique,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
   return (
     <NominationStatsClient
       posudekCategories={posudekCategories}
       movieChances={movieChances}
       objectivityCategories={objectivityCategories}
+      firstPlaceAgreement={firstPlaceAgreement}
+      closeBattles={closeBattles}
+      majorityDivergence={majorityDivergence}
+      unanimousPlacements={unanimousPlacements}
+      objectivityRanking={objectivityRanking}
       numRespondents={numRespondents}
       allFinalized={allFinalized}
       totalUsers={totalUsers}
