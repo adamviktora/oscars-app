@@ -26,34 +26,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { SortableNominationCard } from '@/components/nominations/sortable-nomination-card';
-
-// Category display order for nominations page
-const CATEGORY_ORDER = [
-  'best-picture',
-  'director',
-  'actor',
-  'actress',
-  'supporting-actor',
-  'supporting-actress',
-  'casting',
-  'original-screenplay',
-  'adapted-screenplay',
-  'camera',
-  'film-editing',
-  'music',
-  'song',
-  'production-design',
-  'costume-design',
-  'makeup',
-  'sound',
-  'visual-effects',
-  'international',
-  'animated-feature',
-  'documentary',
-  'short-live-action',
-  'short-animated',
-  'short-documentary',
-];
+import { CATEGORY_ORDER } from '@/lib/category-order';
 
 // Actor/actress categories (show actor name prominently)
 const ACTOR_CATEGORIES = ['actor', 'actress', 'supporting-actor', 'supporting-actress'];

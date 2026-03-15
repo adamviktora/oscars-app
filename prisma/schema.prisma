@@ -112,6 +112,7 @@ model Category {
   nominations          Nomination[]
   shortlistNominations ShortlistNomination[]
   selections           UserPrenom2Selection[]
+  oscarWinner          OscarWinner?
 
   @@map("category")
 }
@@ -154,6 +155,7 @@ model Nomination {
   movie        Movie                   @relation(fields: [movieId], references: [id], onDelete: Cascade)
   actor        Actor?                  @relation(fields: [actorId], references: [id], onDelete: SetNull)
   userRankings UserNominationRanking[]
+  oscarWinner  OscarWinner?
 
   @@unique([categoryId, movieId, actorId])
   @@map("nomination")
@@ -176,6 +178,22 @@ model UserNominationRanking {
 
   @@unique([userId, nominationId])
   @@map("user_nomination_ranking")
+}
+
+// ============================================
+// OSCAR WINNERS (announced during ceremony)
+// ============================================
+
+model OscarWinner {
+  id           Int        @id @default(autoincrement())
+  categoryId   Int        @unique
+  nominationId Int        @unique
+  createdAt    DateTime   @default(now())
+
+  category     Category   @relation(fields: [categoryId], references: [id])
+  nomination   Nomination @relation(fields: [nominationId], references: [id])
+
+  @@map("oscar_winner")
 }
 
 // ============================================

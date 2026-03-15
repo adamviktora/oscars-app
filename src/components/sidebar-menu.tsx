@@ -168,6 +168,17 @@ export function SidebarMenu() {
             Výsledky
           </div>
           <ul className="menu px-4 gap-1">
+            <li>
+              <Link
+                href="/live"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200 font-bold text-warning"
+              >
+                <span>🏆</span>
+                LIVE Oscary
+              </Link>
+            </li>
+
             <li className="menu-title flex flex-row gap-3 py-2 pl-4 text-base-content/70">
               🏆 <span>Nominační kolo</span>
             </li>
@@ -290,6 +301,16 @@ export function SidebarMenu() {
                 Admin mód
               </div>
               <ul className="menu px-4 gap-1">
+                <li>
+                  <Link
+                    href="/admin/oscar-winners"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 py-3 px-4 rounded-lg hover:bg-base-200 font-bold"
+                  >
+                    <span className="text-amber-500">🏆</span>
+                    Vyhlášení výsledků
+                  </Link>
+                </li>
                 <li>
                   <Link
                     href="/admin/users"

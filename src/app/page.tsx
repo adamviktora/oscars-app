@@ -40,16 +40,16 @@ export default async function Home() {
       <div className="text-center">
         <h2 className="text-2xl font-bold mb-4">Vítej, {session.user.name}!</h2>
 
-        {/* Nomination round - main CTA */}
+        {/* Live Oscar results - main CTA */}
         <div className="mb-8 p-6 bg-linear-to-r from-amber-500/20 to-yellow-500/20 rounded-xl border border-amber-500/30">
           <h3 className="text-xl font-bold mb-3 flex items-center justify-center gap-2">
-            🏆 Nominační kolo
+            🏆 Oscary 2026
           </h3>
           <p className="text-base-content/70 mb-4">
-            Nominace jsou venku a s nimi i možnost zadat své tipy!
+            Vyhlášení Oscarů je tu! Sledujte výsledky v reálném čase!
           </p>
-          <Link href="/nominations" className="btn btn-warning btn-lg">
-            Začít tipovat
+          <Link href="/live" className="btn btn-warning btn-lg">
+            LIVE výsledky
           </Link>
         </div>
 
@@ -57,13 +57,16 @@ export default async function Home() {
         {userIsAdmin && (
           <div className="mb-8">
             <h3 className="text-lg font-bold mb-4 text-warning">
-              🔧 Admin - Zadat nominace
+              🔧 Admin
             </h3>
-            <div className="flex flex-row gap-3 justify-center">
-              <Link href="/admin/nominations" className="btn btn-warning">
+            <div className="flex flex-row gap-3 justify-center flex-wrap">
+              <Link href="/admin/oscar-winners" className="btn btn-warning">
+                🏆 Vyhlášení výsledků
+              </Link>
+              <Link href="/admin/nominations" className="btn btn-warning btn-outline">
                 🎬 Nejlepší film
               </Link>
-              <Link href="/admin/nominations2" className="btn btn-warning">
+              <Link href="/admin/nominations2" className="btn btn-warning btn-outline">
                 📋 Prenominační 2.0
               </Link>
             </div>

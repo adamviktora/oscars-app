@@ -43,6 +43,9 @@ export default async function AdminLayout({
                   { href: '/admin/nominations2', label: 'Prenominační kolo 2.0', icon: '📋' },
                 ]}
               />
+              <Link href="/admin/oscar-winners" className="btn btn-ghost btn-sm">
+                Vyhlášení Oscarů
+              </Link>
             </nav>
           </div>
         </div>
