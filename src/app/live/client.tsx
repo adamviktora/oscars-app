@@ -1,6 +1,13 @@
 'use client';
 
-import { Fragment, useEffect, useState, useCallback, useRef } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useMemo,
+} from 'react';
 import {
   Trophy,
   Medal,
@@ -10,6 +17,11 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { sortByCategory } from '@/lib/category-order';
+import { NOMINATION_CASH } from '@/lib/nomination-cash';
+
+const POOL_PER_PERSON = 350;
+const REST_RATIO = [110, 20, 15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+const REST_RATIO_SUM = REST_RATIO.reduce((a, b) => a + b, 0);
 
 interface CategoryResult {
   cash: number;
@@ -21,6 +33,7 @@ interface LeaderboardEntry {
   name: string;
   total: number;
   firstPlaces: number;
+  prenom2Total: number;
   categories: Record<string, CategoryResult>;
 }
 
@@ -46,6 +59,7 @@ interface ResultsData {
   leaderboard: LeaderboardEntry[];
   announcedCategories: AnnouncedCategory[];
   allCategories: CategoryInfo[];
+  isAdmin: boolean;
 }
 
 const getPositionStyle = (position: number) => {
@@ -82,6 +96,7 @@ export function LiveResultsClient() {
     new Set()
   );
   const [highlightedSlug, setHighlightedSlug] = useState<string | null>(null);
+  const [showPrenom2, setShowPrenom2] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const fetchResults = useCallback(async () => {
@@ -136,6 +151,129 @@ export function LiveResultsClient() {
     });
   };
 
+  const leaderboard = useMemo(() => data?.leaderboard ?? [], [data]);
+  const isAdmin = data?.isAdmin ?? false;
+  const announcedCategories = useMemo(
+    () =>
+      data
+        ? sortByCategory(
+            data.announcedCategories.map((c) => ({
+              ...c,
+              slug: c.categorySlug,
+            }))
+          )
+        : [],
+    [data]
+  );
+  const allCategories = useMemo(
+    () => (data ? sortByCategory(data.allCategories) : []),
+    [data]
+  );
+  const announcedSlugs = useMemo(
+    () => new Set(announcedCategories.map((c) => c.categorySlug)),
+    [announcedCategories]
+  );
+
+  const allAnnounced =
+    allCategories.length > 0 &&
+    announcedCategories.length === allCategories.length;
+
+  useEffect(() => {
+    if (allAnnounced) setShowPrenom2(true);
+  }, [allAnnounced]);
+  const totalPool = POOL_PER_PERSON * leaderboard.length;
+  const totalEarned = leaderboard.reduce((sum, e) => sum + e.total, 0);
+  const restMoney = totalPool - totalEarned;
+
+  type ComputedEntry = LeaderboardEntry & {
+    position: number | null;
+    restBonus: number;
+    prenom2Applied: number;
+    displayTotal: number;
+  };
+
+  const computed: ComputedEntry[] = useMemo(() => {
+    if (leaderboard.length === 0) return [];
+
+    const restBonusMap = new Map<string, number>();
+    if (allAnnounced) {
+      for (let i = 0; i < leaderboard.length; i++) {
+        const ratio = i < REST_RATIO.length ? REST_RATIO[i] : 0;
+        restBonusMap.set(
+          leaderboard[i].userId,
+          Math.round((restMoney * ratio) / REST_RATIO_SUM)
+        );
+      }
+    }
+
+    const prenom2AppliedMap = new Map<string, number>();
+    if (showPrenom2 && allAnnounced) {
+      const baseEntries = leaderboard.map((e, i) => ({
+        userId: e.userId,
+        baseTotal: e.total + (restBonusMap.get(e.userId) ?? 0),
+        prenom2Total: e.prenom2Total,
+        basePosition: i,
+      }));
+
+      const tentative = [...baseEntries].sort((a, b) => {
+        const aT = a.baseTotal + a.prenom2Total;
+        const bT = b.baseTotal + b.prenom2Total;
+        return bT - aT;
+      });
+
+      for (let tentPos = 0; tentPos < tentative.length; tentPos++) {
+        const user = tentative[tentPos];
+        if (tentPos >= user.basePosition || user.prenom2Total === 0) {
+          prenom2AppliedMap.set(user.userId, 0);
+          continue;
+        }
+        const personToOvercome = baseEntries[tentPos];
+        const needed = personToOvercome.baseTotal + 1 - user.baseTotal;
+        prenom2AppliedMap.set(
+          user.userId,
+          Math.max(0, Math.min(user.prenom2Total, needed))
+        );
+      }
+    }
+
+    const entries: ComputedEntry[] = leaderboard.map((entry) => {
+      const restBonus = restBonusMap.get(entry.userId) ?? 0;
+      const prenom2Applied = prenom2AppliedMap.get(entry.userId) ?? 0;
+      const displayTotal = entry.total + restBonus + prenom2Applied;
+      return {
+        ...entry,
+        restBonus,
+        prenom2Applied,
+        displayTotal,
+        position: null,
+      };
+    });
+
+    entries.sort((a, b) => {
+      if (b.displayTotal !== a.displayTotal)
+        return b.displayTotal - a.displayTotal;
+      return b.firstPlaces - a.firstPlaces;
+    });
+
+    for (let i = 0; i < entries.length; i++) {
+      if (entries[i].displayTotal === 0) {
+        entries[i].position = null;
+        continue;
+      }
+      let position = i + 1;
+      if (
+        i > 0 &&
+        entries[i].displayTotal === entries[i - 1].displayTotal &&
+        entries[i].firstPlaces === entries[i - 1].firstPlaces
+      ) {
+        position = entries[i - 1].position ?? i + 1;
+      }
+      entries[i].position = position;
+    }
+
+    return entries;
+  }, [leaderboard, allAnnounced, restMoney, showPrenom2]);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
@@ -150,36 +288,8 @@ export function LiveResultsClient() {
     );
   }
 
-  const { leaderboard } = data;
-  const announcedCategories = sortByCategory(
-    data.announcedCategories.map((c) => ({ ...c, slug: c.categorySlug }))
-  );
-  const allCategories = sortByCategory(data.allCategories);
-  const announcedSlugs = new Set(
-    announcedCategories.map((c) => c.categorySlug)
-  );
-
   const leader =
-    leaderboard.length > 0 && leaderboard[0].total > 0 ? leaderboard[0] : null;
-
-  const rankedLeaderboard: (LeaderboardEntry & { position: number | null })[] =
-    [];
-  for (let i = 0; i < leaderboard.length; i++) {
-    const entry = leaderboard[i];
-    if (entry.total === 0) {
-      rankedLeaderboard.push({ ...entry, position: null });
-      continue;
-    }
-    let position = i + 1;
-    if (
-      i > 0 &&
-      entry.total === leaderboard[i - 1].total &&
-      entry.firstPlaces === leaderboard[i - 1].firstPlaces
-    ) {
-      position = rankedLeaderboard[i - 1].position ?? i + 1;
-    }
-    rankedLeaderboard.push({ ...entry, position });
-  }
+    computed.length > 0 && computed[0].displayTotal > 0 ? computed[0] : null;
 
   return (
     <div>
@@ -193,6 +303,17 @@ export function LiveResultsClient() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {(allAnnounced || isAdmin) && (
+            <label className="label cursor-pointer gap-2">
+              <span className="label-text text-sm">Prenom 2.0</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-sm toggle-success"
+                checked={showPrenom2}
+                onChange={(e) => setShowPrenom2(e.target.checked)}
+              />
+            </label>
+          )}
           {connected ? (
             <div className="badge badge-success gap-1">
               <Wifi className="w-3 h-3" />
@@ -241,7 +362,7 @@ export function LiveResultsClient() {
               <div className="inline-flex items-center gap-2 bg-yellow-400/20 border border-yellow-400/30 rounded-full px-6 py-2">
                 <span className="text-yellow-300 text-sm">Celkem:</span>
                 <span className="text-2xl font-bold text-white">
-                  {leader.total} Kč
+                  {leader.displayTotal} Kč
                 </span>
               </div>
             </div>
@@ -266,7 +387,7 @@ export function LiveResultsClient() {
                 </tr>
               </thead>
               <tbody>
-                {rankedLeaderboard.map((entry) => (
+                {computed.map((entry) => (
                   <Fragment key={entry.userId}>
                     <tr
                       className={`cursor-pointer hover:bg-base-200 ${
@@ -294,15 +415,42 @@ export function LiveResultsClient() {
                         )}
                       </td>
                       <td>
-                        <div className="font-medium">{entry.name}</div>
+                        <div className="font-medium">
+                          {entry.name}
+                          {entry.prenom2Applied > 0 && (
+                            <span className="text-xs text-success/50 ml-1.5">
+                              (posun díky prenominačnímu kolu 2.0)
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-base-content/50 sm:hidden">
                           {entry.firstPlaces}x tip na 1. místo
                         </div>
                       </td>
                       <td className="text-center">
-                        <span className="badge badge-lg badge-warning">
-                          {entry.total} Kč
-                        </span>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="badge badge-lg badge-warning">
+                            {entry.displayTotal} Kč
+                          </span>
+                          {(entry.restBonus > 0 ||
+                            entry.prenom2Applied > 0) && (
+                            <span className="text-xs text-base-content/40 tabular-nums">
+                              {entry.total} Kč
+                              {entry.restBonus > 0 && (
+                                <span className="text-info">
+                                  {' '}
+                                  + {entry.restBonus}
+                                </span>
+                              )}
+                              {entry.prenom2Applied > 0 && (
+                                <span className="text-accent">
+                                  {' '}
+                                  + {entry.prenom2Applied}
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="text-center hidden sm:table-cell tabular-nums">
                         {entry.firstPlaces}
@@ -353,6 +501,24 @@ export function LiveResultsClient() {
                               </div>
                             )}
                           </div>
+                          {(entry.restBonus > 0 ||
+                            entry.prenom2Applied > 0) && (
+                            <div className="mt-3 pt-3 border-t border-base-300 flex flex-wrap gap-3 text-sm">
+                              {entry.restBonus > 0 && (
+                                <div className="text-info">
+                                  Zbytek: +{entry.restBonus} Kč
+                                </div>
+                              )}
+                              {entry.prenom2Applied > 0 && (
+                                <div className="text-accent">
+                                  Prenom 2.0: +{entry.prenom2Applied} Kč
+                                  <span className="text-base-content/40 ml-1">
+                                    (z {entry.prenom2Total} Kč)
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     )}
@@ -361,6 +527,25 @@ export function LiveResultsClient() {
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      {/* Rest Money Info */}
+      <div className="stats shadow mb-8 w-full">
+        <div className="stat">
+          <div className="stat-title">Celkový balík</div>
+          <div className="stat-value text-lg">{totalPool} Kč</div>
+          <div className="stat-desc">
+            {leaderboard.length} účastníků × {POOL_PER_PERSON} Kč
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Získané peníze</div>
+          <div className="stat-value text-lg">{totalEarned} Kč</div>
+        </div>
+        <div className="stat">
+          <div className="stat-title">Zbylé peníze</div>
+          <div className="stat-value text-lg text-info">{restMoney} Kč</div>
         </div>
       </div>
 
@@ -463,11 +648,30 @@ export function LiveResultsClient() {
                     <span className="w-5 h-5 rounded-full border-2 border-base-300 inline-block shrink-0" />
                   )}
                   <div>
-                    <span className="font-medium">{cat.name}</span>
-                    {winner && (
-                      <span className="text-success ml-2">
-                        — {winner.winnerName}
-                      </span>
+                    <div>
+                      <span className="font-medium">{cat.name}</span>
+                      {winner && (
+                        <span className="text-success ml-2">
+                          — {winner.winnerName}
+                          {winner.actorName && (
+                            <span className="text-success/60">
+                              {' '}
+                              ({winner.movieName})
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                    {NOMINATION_CASH[cat.slug] && (
+                      <div className="text-xs text-base-content/40 tabular-nums mt-0.5">
+                        {NOMINATION_CASH[cat.slug].map((v, i) => (
+                          <span key={i}>
+                            {i > 0 && <span className="mx-0.5">·</span>}
+                            {v}
+                          </span>
+                        ))}{' '}
+                        Kč
+                      </div>
                     )}
                   </div>
                 </div>

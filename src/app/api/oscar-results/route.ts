@@ -3,6 +3,8 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { getNominationCashReward } from '@/lib/nomination-cash';
+import { getPrenom2TotalsByUser } from '@/lib/prenom2';
+import { isAdmin } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +18,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const [winners, users, allCategories] = await Promise.all([
+    const [winners, users, allCategories, prenom2Totals] = await Promise.all([
       prisma.oscarWinner.findMany({
         include: {
           category: { select: { id: true, name: true, slug: true, order: true } },
@@ -45,6 +47,7 @@ export async function GET() {
         select: { id: true, name: true, slug: true, order: true },
         orderBy: { order: 'asc' },
       }),
+      getPrenom2TotalsByUser(),
     ]);
 
     const leaderboard: Record<
@@ -53,6 +56,7 @@ export async function GET() {
         name: string;
         total: number;
         firstPlaces: number;
+        prenom2Total: number;
         categories: Record<string, { cash: number; ranking: number | null }>;
       }
     > = {};
@@ -62,6 +66,7 @@ export async function GET() {
         name: u.name,
         total: 0,
         firstPlaces: 0,
+        prenom2Total: prenom2Totals.get(u.id) ?? 0,
         categories: {},
       };
     }
@@ -123,6 +128,7 @@ export async function GET() {
       leaderboard: sortedLeaderboard,
       announcedCategories,
       allCategories: allCategoriesList,
+      isAdmin: isAdmin(session.user.email),
     });
   } catch (error) {
     console.error('Error fetching oscar results:', error);
