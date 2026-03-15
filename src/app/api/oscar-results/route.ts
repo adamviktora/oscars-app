@@ -14,10 +14,6 @@ export async function GET() {
       headers: await headers(),
     });
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const [winners, users, allCategories, prenom2Totals] = await Promise.all([
       prisma.oscarWinner.findMany({
         include: {
@@ -128,7 +124,7 @@ export async function GET() {
       leaderboard: sortedLeaderboard,
       announcedCategories,
       allCategories: allCategoriesList,
-      isAdmin: isAdmin(session.user.email),
+      isAdmin: isAdmin(session?.user.email),
     });
   } catch (error) {
     console.error('Error fetching oscar results:', error);

@@ -359,9 +359,9 @@ export function LiveResultsClient() {
                 </span>
               </div>
 
-              <div className="inline-flex items-center gap-2 bg-yellow-400/20 border border-yellow-400/30 rounded-full px-6 py-2">
+              <div className="inline-flex items-center gap-2 bg-black/30 border border-yellow-400/30 rounded-full px-6 py-3">
                 <span className="text-yellow-300 text-sm">Celkem:</span>
-                <span className="text-2xl font-bold text-white">
+                <span className="text-3xl font-bold text-yellow-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]">
                   {leader.displayTotal} Kč
                 </span>
               </div>
@@ -415,7 +415,7 @@ export function LiveResultsClient() {
                         )}
                       </td>
                       <td>
-                        <div className="font-medium">
+                        <div className="font-medium text-lg">
                           {entry.name}
                           {entry.prenom2Applied > 0 && (
                             <span className="text-xs text-success/50 ml-1.5">
@@ -429,7 +429,7 @@ export function LiveResultsClient() {
                       </td>
                       <td className="text-center">
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="badge badge-lg badge-warning">
+                          <span className="badge badge-lg badge-warning text-base font-bold text-warning-content">
                             {entry.displayTotal} Kč
                           </span>
                           {(entry.restBonus > 0 ||
