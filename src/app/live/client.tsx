@@ -429,7 +429,7 @@ export function LiveResultsClient() {
                       </td>
                       <td className="text-center">
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="badge badge-lg badge-warning text-base font-bold text-warning-content">
+                          <span className="badge badge-lg badge-warning text-base font-bold text-warning-content whitespace-nowrap">
                             {entry.displayTotal} Kč
                           </span>
                           {(entry.restBonus > 0 ||
