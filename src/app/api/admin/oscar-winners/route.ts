@@ -15,7 +15,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { categoryId } = await request.json();
+    const { categoryId, nominationId } = await request.json();
 
     if (!categoryId) {
       return NextResponse.json(
@@ -36,9 +36,15 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await prisma.oscarWinner.deleteMany({
-      where: { categoryId },
-    });
+    if (nominationId) {
+      await prisma.oscarWinner.deleteMany({
+        where: { categoryId, nominationId },
+      });
+    } else {
+      await prisma.oscarWinner.deleteMany({
+        where: { categoryId },
+      });
+    }
 
     emitWinnerAnnounced(category.slug);
 
@@ -83,10 +89,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await prisma.oscarWinner.upsert({
-      where: { categoryId },
-      create: { categoryId, nominationId },
-      update: { nominationId },
+    await prisma.oscarWinner.create({
+      data: { categoryId, nominationId },
     });
 
     emitWinnerAnnounced(category.slug);

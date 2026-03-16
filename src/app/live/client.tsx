@@ -557,20 +557,22 @@ export function LiveResultsClient() {
             { count: number; categories: string[] }
           >();
           for (const ac of announcedCategories) {
-            let movie = ac.movieName;
-            if (ac.categorySlug === 'song') {
-              const sep = movie.indexOf(' \u2013 ');
-              if (sep !== -1) movie = movie.substring(0, sep);
-            }
-            const existing = movieCounts.get(movie);
-            if (existing) {
-              existing.count += 1;
-              existing.categories.push(ac.categoryName);
-            } else {
-              movieCounts.set(movie, {
-                count: 1,
-                categories: [ac.categoryName],
-              });
+            const movies = ac.movieName.split(' / ');
+            for (let movie of movies) {
+              if (ac.categorySlug === 'song') {
+                const sep = movie.indexOf(' \u2013 ');
+                if (sep !== -1) movie = movie.substring(0, sep);
+              }
+              const existing = movieCounts.get(movie);
+              if (existing) {
+                existing.count += 1;
+                existing.categories.push(ac.categoryName);
+              } else {
+                movieCounts.set(movie, {
+                  count: 1,
+                  categories: [ac.categoryName],
+                });
+              }
             }
           }
           const sorted = [...movieCounts.entries()].sort(

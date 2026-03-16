@@ -112,7 +112,7 @@ model Category {
   nominations          Nomination[]
   shortlistNominations ShortlistNomination[]
   selections           UserPrenom2Selection[]
-  oscarWinner          OscarWinner?
+  oscarWinners         OscarWinner[]
 
   @@map("category")
 }
@@ -186,13 +186,14 @@ model UserNominationRanking {
 
 model OscarWinner {
   id           Int        @id @default(autoincrement())
-  categoryId   Int        @unique
+  categoryId   Int
   nominationId Int        @unique
   createdAt    DateTime   @default(now())
 
   category     Category   @relation(fields: [categoryId], references: [id])
   nomination   Nomination @relation(fields: [nominationId], references: [id])
 
+  @@unique([categoryId, nominationId])
   @@map("oscar_winner")
 }
 

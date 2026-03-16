@@ -22,7 +22,7 @@ export default async function AdminOscarWinnersPage() {
         },
         orderBy: { defaultOrder: 'asc' },
       },
-      oscarWinner: {
+      oscarWinners: {
         select: { nominationId: true },
       },
     },
@@ -41,7 +41,7 @@ export default async function AdminOscarWinnersPage() {
           ? `${nom.actor.fullName} (${nom.movie.name})`
           : nom.movie.name,
       })),
-      currentWinnerNominationId: cat.oscarWinner?.nominationId ?? null,
+      currentWinnerNominationIds: cat.oscarWinners.map((w) => w.nominationId),
     }))
   );
 

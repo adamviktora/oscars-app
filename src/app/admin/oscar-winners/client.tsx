@@ -14,7 +14,7 @@ interface CategoryData {
   slug: string;
   isActorCategory: boolean;
   nominations: Nomination[];
-  currentWinnerNominationId: number | null;
+  currentWinnerNominationIds: number[];
 }
 
 interface Props {
@@ -22,10 +22,10 @@ interface Props {
 }
 
 export function OscarWinnersClient({ categories }: Props) {
-  const [winners, setWinners] = useState<Record<number, number | null>>(() => {
-    const initial: Record<number, number | null> = {};
+  const [winners, setWinners] = useState<Record<number, number[]>>(() => {
+    const initial: Record<number, number[]> = {};
     for (const cat of categories) {
-      initial[cat.id] = cat.currentWinnerNominationId;
+      initial[cat.id] = cat.currentWinnerNominationIds;
     }
     return initial;
   });
@@ -34,7 +34,7 @@ export function OscarWinnersClient({ categories }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const [pendingAction, setPendingAction] = useState<{
-    type: 'set' | 'clear';
+    type: 'add' | 'remove' | 'clear';
     categoryId: number;
     categoryName: string;
     nominationId?: number;
@@ -42,7 +42,7 @@ export function OscarWinnersClient({ categories }: Props) {
   } | null>(null);
   const modalRef = useRef<HTMLDialogElement>(null);
 
-  const announcedCount = Object.values(winners).filter((v) => v !== null).length;
+  const announcedCount = Object.values(winners).filter((v) => v.length > 0).length;
 
   const openConfirmation = (action: NonNullable<typeof pendingAction>) => {
     setPendingAction(action);
@@ -60,7 +60,7 @@ export function OscarWinnersClient({ categories }: Props) {
     setSavedCategory(null);
 
     try {
-      if (type === 'set' && nominationId) {
+      if (type === 'add' && nominationId) {
         const response = await fetch('/api/admin/oscar-winners', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -70,7 +70,24 @@ export function OscarWinnersClient({ categories }: Props) {
           const data = await response.json();
           throw new Error(data.error || 'Nepodařilo se uložit');
         }
-        setWinners((prev) => ({ ...prev, [categoryId]: nominationId }));
+        setWinners((prev) => ({
+          ...prev,
+          [categoryId]: [...(prev[categoryId] ?? []), nominationId],
+        }));
+      } else if (type === 'remove' && nominationId) {
+        const response = await fetch('/api/admin/oscar-winners', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ categoryId, nominationId }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Nepodařilo se zrušit');
+        }
+        setWinners((prev) => ({
+          ...prev,
+          [categoryId]: (prev[categoryId] ?? []).filter((id) => id !== nominationId),
+        }));
       } else {
         const response = await fetch('/api/admin/oscar-winners', {
           method: 'DELETE',
@@ -81,7 +98,7 @@ export function OscarWinnersClient({ categories }: Props) {
           const data = await response.json();
           throw new Error(data.error || 'Nepodařilo se zrušit');
         }
-        setWinners((prev) => ({ ...prev, [categoryId]: null }));
+        setWinners((prev) => ({ ...prev, [categoryId]: [] }));
       }
       setSavedCategory(categoryId);
       setTimeout(() => setSavedCategory(null), 2000);
@@ -117,8 +134,8 @@ export function OscarWinnersClient({ categories }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {categories.map((cat) => {
-          const currentWinner = winners[cat.id];
-          const isAnnounced = currentWinner !== null;
+          const currentWinners = winners[cat.id] ?? [];
+          const isAnnounced = currentWinners.length > 0;
           const isSaving = savingCategory === cat.id;
           const justSaved = savedCategory === cat.id;
 
@@ -139,6 +156,9 @@ export function OscarWinnersClient({ categories }: Props) {
               >
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-lg">{cat.name}</span>
+                  {currentWinners.length === 2 && (
+                    <span className="badge badge-sm badge-warning">remíza</span>
+                  )}
                   {isSaving && <Loader2 className="w-4 h-4 animate-spin text-base-content/50" />}
                   {justSaved && <Check className="w-4 h-4 text-success" />}
                 </div>
@@ -154,7 +174,7 @@ export function OscarWinnersClient({ categories }: Props) {
                     className="btn btn-ghost btn-xs text-error"
                   >
                     <X className="w-4 h-4" />
-                    Zrušit
+                    Zrušit vše
                   </button>
                 )}
               </div>
@@ -162,25 +182,38 @@ export function OscarWinnersClient({ categories }: Props) {
               {/* Nominations */}
               <div className="p-4 space-y-2">
                 {cat.nominations.map((nom) => {
-                  const isWinner = currentWinner === nom.id;
+                  const isWinner = currentWinners.includes(nom.id);
+                  const canAddMore = currentWinners.length < 2;
 
                   return (
                     <button
                       key={nom.id}
                       onClick={() =>
-                        openConfirmation({
-                          type: 'set',
-                          categoryId: cat.id,
-                          categoryName: cat.name,
-                          nominationId: nom.id,
-                          nominationName: nom.displayName,
-                        })
+                        openConfirmation(
+                          isWinner
+                            ? {
+                                type: 'remove',
+                                categoryId: cat.id,
+                                categoryName: cat.name,
+                                nominationId: nom.id,
+                                nominationName: nom.displayName,
+                              }
+                            : {
+                                type: 'add',
+                                categoryId: cat.id,
+                                categoryName: cat.name,
+                                nominationId: nom.id,
+                                nominationName: nom.displayName,
+                              }
+                        )
                       }
-                      disabled={isSaving}
+                      disabled={isSaving || (!isWinner && !canAddMore)}
                       className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
                         isWinner
                           ? 'border-success bg-success/10 font-medium'
-                          : 'border-base-300 hover:border-primary/50 hover:bg-base-200'
+                          : !canAddMore
+                            ? 'border-base-300 opacity-40 cursor-not-allowed'
+                            : 'border-base-300 hover:border-primary/50 hover:bg-base-200'
                       } ${isSaving ? 'opacity-50' : ''}`}
                     >
                       <span className="flex items-center gap-2">
@@ -203,12 +236,16 @@ export function OscarWinnersClient({ categories }: Props) {
             <>
               <h3 className="font-bold text-lg flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-warning" />
-                {pendingAction.type === 'set' ? 'Potvrdit vyhlášení' : 'Potvrdit zrušení'}
+                {pendingAction.type === 'add'
+                  ? 'Potvrdit vyhlášení'
+                  : pendingAction.type === 'remove'
+                    ? 'Potvrdit odebrání vítěze'
+                    : 'Potvrdit zrušení'}
               </h3>
-              {pendingAction.type === 'set' ? (
+              {pendingAction.type === 'add' ? (
                 <div className="py-4">
                   <p className="mb-3">
-                    Opravdu chcete vyhlásit vítěze kategorie{' '}
+                    Opravdu chcete přidat vítěze do kategorie{' '}
                     <strong>{pendingAction.categoryName}</strong>?
                   </p>
                   <div className="bg-success/10 border border-success/30 rounded-lg p-3 flex items-center gap-2">
@@ -219,10 +256,21 @@ export function OscarWinnersClient({ categories }: Props) {
                     Výsledek se okamžitě zobrazí všem účastníkům.
                   </p>
                 </div>
+              ) : pendingAction.type === 'remove' ? (
+                <div className="py-4">
+                  <p className="mb-3">
+                    Opravdu chcete odebrat vítěze z kategorie{' '}
+                    <strong>{pendingAction.categoryName}</strong>?
+                  </p>
+                  <div className="bg-error/10 border border-error/30 rounded-lg p-3 flex items-center gap-2">
+                    <X className="w-5 h-5 text-error shrink-0" />
+                    <span className="font-medium">{pendingAction.nominationName}</span>
+                  </div>
+                </div>
               ) : (
                 <div className="py-4">
                   <p>
-                    Opravdu chcete zrušit vyhlášeného vítěze kategorie{' '}
+                    Opravdu chcete zrušit všechny vítěze kategorie{' '}
                     <strong>{pendingAction.categoryName}</strong>?
                   </p>
                   <p className="text-sm text-base-content/50 mt-3">
@@ -237,18 +285,23 @@ export function OscarWinnersClient({ categories }: Props) {
                 <button
                   onClick={handleConfirm}
                   className={`btn gap-2 ${
-                    pendingAction.type === 'set' ? 'btn-success' : 'btn-error'
+                    pendingAction.type === 'add' ? 'btn-success' : 'btn-error'
                   }`}
                 >
-                  {pendingAction.type === 'set' ? (
+                  {pendingAction.type === 'add' ? (
                     <>
                       <Trophy className="w-5 h-5" />
                       Vyhlásit
                     </>
+                  ) : pendingAction.type === 'remove' ? (
+                    <>
+                      <X className="w-5 h-5" />
+                      Odebrat vítěze
+                    </>
                   ) : (
                     <>
                       <X className="w-5 h-5" />
-                      Zrušit výběr
+                      Zrušit vše
                     </>
                   )}
                 </button>

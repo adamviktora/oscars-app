@@ -67,41 +67,71 @@ export async function GET() {
       };
     }
 
-    const announcedCategories = winners.map((w) => {
-      const slug = w.category.slug;
-      const displayName =
-        w.nomination.actor?.fullName ?? w.nomination.movie.name;
+    const winnersByCategory = new Map<number, typeof winners>();
+    for (const w of winners) {
+      const existing = winnersByCategory.get(w.categoryId) ?? [];
+      existing.push(w);
+      winnersByCategory.set(w.categoryId, existing);
+    }
 
-      const rankingsByUser = new Map(
-        w.nomination.userRankings.map((r) => [r.userId, r.ranking])
+    const announcedCategories: {
+      categoryId: number;
+      categoryName: string;
+      categorySlug: string;
+      categoryOrder: number;
+      winnerName: string;
+      movieName: string;
+      actorName: string | null;
+    }[] = [];
+
+    for (const [, categoryWinners] of winnersByCategory) {
+      const first = categoryWinners[0];
+      const slug = first.category.slug;
+
+      const winnerNames = categoryWinners.map(
+        (w) => w.nomination.actor?.fullName ?? w.nomination.movie.name
       );
 
       for (const u of users) {
         const entry = leaderboard[u.id];
         if (!entry) continue;
 
-        const userRanking = rankingsByUser.get(u.id) ?? null;
-        const cash = userRanking !== null
-          ? getNominationCashReward(slug, userRanking)
+        let bestRanking: number | null = null;
+        for (const w of categoryWinners) {
+          const ranking = w.nomination.userRankings.find(
+            (r) => r.userId === u.id
+          )?.ranking ?? null;
+          if (ranking !== null && (bestRanking === null || ranking < bestRanking)) {
+            bestRanking = ranking;
+          }
+        }
+
+        const cash = bestRanking !== null
+          ? getNominationCashReward(slug, bestRanking)
           : 0;
 
         entry.total += cash;
-        entry.categories[slug] = { cash, ranking: userRanking };
-        if (userRanking === 1) {
+        entry.categories[slug] = { cash, ranking: bestRanking };
+        if (bestRanking === 1) {
           entry.firstPlaces += 1;
         }
       }
 
-      return {
-        categoryId: w.category.id,
-        categoryName: w.category.name,
+      announcedCategories.push({
+        categoryId: first.category.id,
+        categoryName: first.category.name,
         categorySlug: slug,
-        categoryOrder: w.category.order,
-        winnerName: displayName,
-        movieName: w.nomination.movie.name,
-        actorName: w.nomination.actor?.fullName ?? null,
-      };
-    });
+        categoryOrder: first.category.order,
+        winnerName: winnerNames.join(' / '),
+        movieName: categoryWinners.map((w) => w.nomination.movie.name).join(' / '),
+        actorName: categoryWinners.some((w) => w.nomination.actor)
+          ? categoryWinners
+              .map((w) => w.nomination.actor?.fullName)
+              .filter(Boolean)
+              .join(' / ')
+          : null,
+      });
+    }
 
     announcedCategories.sort((a, b) => a.categoryOrder - b.categoryOrder);
 
@@ -117,7 +147,7 @@ export async function GET() {
       name: c.name,
       slug: c.slug,
       order: c.order,
-      announced: winners.some((w) => w.categoryId === c.id),
+      announced: winnersByCategory.has(c.id),
     }));
 
     return NextResponse.json({
