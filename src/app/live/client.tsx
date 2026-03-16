@@ -195,40 +195,44 @@ export function LiveResultsClient() {
   const computed: ComputedEntry[] = useMemo(() => {
     if (leaderboard.length === 0) return [];
 
-    const restBonusMap = new Map<string, number>();
-    if (allAnnounced) {
-      for (let i = 0; i < leaderboard.length; i++) {
-        const ratio = i < REST_RATIO.length ? REST_RATIO[i] : 0;
-        restBonusMap.set(
-          leaderboard[i].userId,
-          Math.round((restMoney * ratio) / REST_RATIO_SUM)
-        );
-      }
+    // Step 1: Base order by current cash (as delivered from API)
+    const baseEntries = leaderboard.map((e, i) => ({
+      ...e,
+      basePosition: i,
+    }));
+    const baseByUserId = new Map(baseEntries.map((e) => [e.userId, e]));
+
+    // Step 2: Create a fixed target order using full Prenom 2.0 totals
+    const fixedOrder = [...baseEntries];
+    if (showPrenom2 && allAnnounced) {
+      fixedOrder.sort((a, b) => {
+        const aT = a.total + a.prenom2Total;
+        const bT = b.total + b.prenom2Total;
+        if (bT !== aT) return bT - aT;
+        return b.firstPlaces - a.firstPlaces;
+      });
     }
 
+    // Step 3: For fixed order, apply only minimal prenom needed for that position
     const prenom2AppliedMap = new Map<string, number>();
     if (showPrenom2 && allAnnounced) {
-      const baseEntries = leaderboard.map((e, i) => ({
-        userId: e.userId,
-        baseTotal: e.total + (restBonusMap.get(e.userId) ?? 0),
-        prenom2Total: e.prenom2Total,
-        basePosition: i,
-      }));
-
-      const tentative = [...baseEntries].sort((a, b) => {
-        const aT = a.baseTotal + a.prenom2Total;
-        const bT = b.baseTotal + b.prenom2Total;
-        return bT - aT;
-      });
-
-      for (let tentPos = 0; tentPos < tentative.length; tentPos++) {
-        const user = tentative[tentPos];
-        if (tentPos >= user.basePosition || user.prenom2Total === 0) {
+      for (let fixedPos = 0; fixedPos < fixedOrder.length; fixedPos++) {
+        const user = fixedOrder[fixedPos];
+        const baseUser = baseByUserId.get(user.userId);
+        if (!baseUser) {
           prenom2AppliedMap.set(user.userId, 0);
           continue;
         }
-        const personToOvercome = baseEntries[tentPos];
-        const needed = personToOvercome.baseTotal + 1 - user.baseTotal;
+
+        // User keeps or loses position => no prenom needed.
+        if (fixedPos >= baseUser.basePosition || user.prenom2Total === 0) {
+          prenom2AppliedMap.set(user.userId, 0);
+          continue;
+        }
+
+        // Minimal amount to beat the original owner of this target base position.
+        const personAtTargetBasePosition = baseEntries[fixedPos];
+        const needed = personAtTargetBasePosition.total + 1 - user.total;
         prenom2AppliedMap.set(
           user.userId,
           Math.max(0, Math.min(user.prenom2Total, needed))
@@ -236,23 +240,34 @@ export function LiveResultsClient() {
       }
     }
 
-    const entries: ComputedEntry[] = leaderboard.map((entry) => {
-      const restBonus = restBonusMap.get(entry.userId) ?? 0;
+    // Keep this order fixed from now on.
+    const postPrenom2 = fixedOrder.map((entry) => {
       const prenom2Applied = prenom2AppliedMap.get(entry.userId) ?? 0;
-      const displayTotal = entry.total + restBonus + prenom2Applied;
+      return { ...entry, prenom2Applied };
+    });
+
+    // Step 4: Assign rest bonus in fixed order (must not reorder anymore)
+    const restBonusMap = new Map<string, number>();
+    if (allAnnounced) {
+      for (let i = 0; i < postPrenom2.length; i++) {
+        const ratio = i < REST_RATIO.length ? REST_RATIO[i] : 0;
+        restBonusMap.set(
+          postPrenom2[i].userId,
+          Math.round((restMoney * ratio) / REST_RATIO_SUM)
+        );
+      }
+    }
+
+    // Step 4: Build final entries
+    const entries: ComputedEntry[] = postPrenom2.map((entry) => {
+      const restBonus = restBonusMap.get(entry.userId) ?? 0;
+      const displayTotal = entry.total + entry.prenom2Applied + restBonus;
       return {
         ...entry,
         restBonus,
-        prenom2Applied,
         displayTotal,
         position: null,
       };
-    });
-
-    entries.sort((a, b) => {
-      if (b.displayTotal !== a.displayTotal)
-        return b.displayTotal - a.displayTotal;
-      return b.firstPlaces - a.firstPlaces;
     });
 
     for (let i = 0; i < entries.length; i++) {
