@@ -183,7 +183,6 @@ export function LiveResultsClient() {
   }, [allAnnounced]);
   const totalPool = POOL_PER_PERSON * leaderboard.length;
   const totalEarned = leaderboard.reduce((sum, e) => sum + e.total, 0);
-  const restMoney = totalPool - totalEarned;
 
   type ComputedEntry = LeaderboardEntry & {
     position: number | null;
@@ -238,6 +237,25 @@ export function LiveResultsClient() {
           Math.max(0, Math.min(user.prenom2Total, needed))
         );
       }
+
+      // If two neighbors are equal before rest distribution, boost the better
+      // ranked one by +1 Kč (when possible) so pre-rest cash is not equal.
+      for (let i = fixedOrder.length - 2; i >= 0; i--) {
+        const better = fixedOrder[i];
+        const worse = fixedOrder[i + 1];
+
+        const betterApplied = prenom2AppliedMap.get(better.userId) ?? 0;
+        const worseApplied = prenom2AppliedMap.get(worse.userId) ?? 0;
+        const betterPreRestTotal = better.total + betterApplied;
+        const worsePreRestTotal = worse.total + worseApplied;
+
+        if (betterPreRestTotal === worsePreRestTotal) {
+          const betterRemainingPrenom = better.prenom2Total - betterApplied;
+          if (betterRemainingPrenom > 0) {
+            prenom2AppliedMap.set(better.userId, betterApplied + 1);
+          }
+        }
+      }
     }
 
     // Keep this order fixed from now on.
@@ -246,6 +264,15 @@ export function LiveResultsClient() {
       return { ...entry, prenom2Applied };
     });
 
+    const totalPrenom2Applied =
+      showPrenom2 && allAnnounced
+        ? postPrenom2.reduce((sum, entry) => sum + entry.prenom2Applied, 0)
+        : 0;
+    const restMoneyForDistribution = Math.max(
+      0,
+      totalPool - totalEarned - totalPrenom2Applied
+    );
+
     // Step 4: Assign rest bonus in fixed order (must not reorder anymore)
     const restBonusMap = new Map<string, number>();
     if (allAnnounced) {
@@ -253,7 +280,7 @@ export function LiveResultsClient() {
         const ratio = i < REST_RATIO.length ? REST_RATIO[i] : 0;
         restBonusMap.set(
           postPrenom2[i].userId,
-          Math.round((restMoney * ratio) / REST_RATIO_SUM)
+          Math.round((restMoneyForDistribution * ratio) / REST_RATIO_SUM)
         );
       }
     }
@@ -287,7 +314,18 @@ export function LiveResultsClient() {
     }
 
     return entries;
-  }, [leaderboard, allAnnounced, restMoney, showPrenom2]);
+  }, [leaderboard, allAnnounced, totalEarned, totalPool, showPrenom2]);
+
+  const totalPrenom2Applied = useMemo(
+    () => computed.reduce((sum, entry) => sum + entry.prenom2Applied, 0),
+    [computed]
+  );
+  const restMoney = Math.max(
+    0,
+    totalPool -
+      totalEarned -
+      (showPrenom2 && allAnnounced ? totalPrenom2Applied : 0)
+  );
 
   if (loading) {
     return (
@@ -447,24 +485,14 @@ export function LiveResultsClient() {
                           <span className="badge badge-lg badge-warning text-base font-bold text-warning-content whitespace-nowrap">
                             {entry.displayTotal} Kč
                           </span>
-                          {(entry.restBonus > 0 ||
-                            entry.prenom2Applied > 0) && (
-                            <span className="text-xs text-base-content/40 tabular-nums">
-                              {entry.total} Kč
-                              {entry.restBonus > 0 && (
-                                <span className="text-info">
-                                  {' '}
-                                  + {entry.restBonus}
-                                </span>
-                              )}
-                              {entry.prenom2Applied > 0 && (
-                                <span className="text-accent">
-                                  {' '}
-                                  + {entry.prenom2Applied}
-                                </span>
-                              )}
+                          <span className="text-sm text-base-content/80 tabular-nums font-medium">
+                            <span>{entry.total} Kč</span>
+                            <span className="text-accent">
+                              {' '}
+                              + {entry.prenom2Applied}
                             </span>
-                          )}
+                            <span className="text-info"> + {entry.restBonus}</span>
+                          </span>
                         </div>
                       </td>
                       <td className="text-center hidden sm:table-cell tabular-nums">
